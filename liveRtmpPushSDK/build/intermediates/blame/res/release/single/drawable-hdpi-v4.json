@@ -76,6 +76,10 @@
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-hdpi-v4\\abc_btn_radio_to_on_mtrl_015.png"
     },
     {
+        "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\release\\drawable-hdpi-v4\\ic_meet_launcher1.png",
+        "source": "D:\\MeetingOnline\\liveRtmpPushSDK\\src\\main\\res\\drawable-hdpi\\ic_meet_launcher1.png"
+    },
+    {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\release\\drawable-hdpi-v4\\abc_ic_menu_copy_mtrl_am_alpha.png",
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-hdpi-v4\\abc_ic_menu_copy_mtrl_am_alpha.png"
     },
@@ -84,12 +88,12 @@
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-hdpi-v4\\abc_ic_star_black_16dp.png"
     },
     {
-        "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\release\\drawable-hdpi-v4\\abc_ic_menu_share_mtrl_alpha.png",
-        "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-hdpi-v4\\abc_ic_menu_share_mtrl_alpha.png"
-    },
-    {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\release\\drawable-hdpi-v4\\abc_ab_share_pack_mtrl_alpha.9.png",
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-hdpi-v4\\abc_ab_share_pack_mtrl_alpha.9.png"
+    },
+    {
+        "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\release\\drawable-hdpi-v4\\abc_ic_menu_share_mtrl_alpha.png",
+        "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-hdpi-v4\\abc_ic_menu_share_mtrl_alpha.png"
     },
     {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\release\\drawable-hdpi-v4\\abc_ic_star_black_36dp.png",

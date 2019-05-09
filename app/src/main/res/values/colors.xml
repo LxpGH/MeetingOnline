@@ -3,4 +3,13 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="blue">#4c86ea</color>
+    <color name="gray">#a19d9e</color>
+    <color name="grey">#86a19d9e</color>
+    <color name="white">#fff</color>
+    <color name="exit_red">#d71e06</color>
+    <color name="start_red">#d71e06</color>
+    <color name="mic_phone_blue">#1295da</color>
+    <color name="camera_blue">#1295da</color>
+    <color name="opaque">#00ffffff</color>
 </resources>

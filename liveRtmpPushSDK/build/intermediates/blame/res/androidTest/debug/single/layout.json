@@ -124,10 +124,6 @@
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\layout\\abc_popup_menu_header_item_layout.xml"
     },
     {
-        "merged": "D:\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\layout\\activity_main.xml",
-        "source": "D:\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\bundles\\debug\\res\\layout\\activity_main.xml"
-    },
-    {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\layout\\abc_dialog_title_material.xml",
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\layout\\abc_dialog_title_material.xml"
     },
@@ -146,10 +142,6 @@
     {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\layout\\abc_expanded_menu_layout.xml",
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\layout\\abc_expanded_menu_layout.xml"
-    },
-    {
-        "merged": "E:\\gitdir\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\layout\\activity_main.xml",
-        "source": "E:\\gitdir\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\bundles\\debug\\res\\layout\\activity_main.xml"
     },
     {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\layout\\notification_template_media_custom.xml",

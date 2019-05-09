@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <RelativeLayout
+            android:id="@+id/meet_sv"
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:background="@drawable/meet_sv_bg">
+        <ImageView
+                android:id="@+id/search_icon"
+                android:layout_width="35dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="15dp"
+                android:src="@drawable/ic_search"/>
+        <AutoCompleteTextView
+                android:id="@+id/search_et"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_toEndOf="@+id/search_icon"
+                android:background="@null"
+                android:hint="请输入关键字"
+                android:completionThreshold="2"
+                android:textCursorDrawable="@drawable/ic_line"/>
+
+    </RelativeLayout>
+
+<!-->
+    <android.support.v7.widget.RecyclerView
+            android:id="@+id/meet_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/meet_sv"
+            android:layout_marginTop="10dp"/>
+            <-->
+    <ExpandableListView
+                        android:id="@+id/type"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/meet_sv"
+                        android:gravity="center_vertical"
+                        android:background="#fff"/>
+</RelativeLayout>

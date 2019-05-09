@@ -1,22 +1,132 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/cRelative"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
-
-
-    <SurfaceView
-            android:id="@+id/video"
+<LinearLayout
+android:id="@+id/videos_content"
+android:layout_width="match_parent"
+android:layout_height="230dp"
+android:orientation="horizontal">
+    <LinearLayout
+    android:id="@+id/left_video_box"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:orientation="vertical">
+        <RelativeLayout
+        android:id="@+id/left_video1_box"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#000">
+            <TextView
+            android:id="@+id/left_video1_title"
             android:layout_width="match_parent"
-            android:layout_height="230dp"
-
-    />
+            android:layout_height="wrap_content"
+            android:textColor="#fff"
+            android:text="成员1"/>
+            <RelativeLayout
+                    android:id="@+id/video1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/left_video1_title"/>
+        </RelativeLayout>
+        <RelativeLayout
+                android:id="@+id/left_video2_box"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="5dp"
+                android:background="#000">
+            <TextView
+                    android:id="@+id/left_video2_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#fff"
+                    android:text="成员2"/>
+            <RelativeLayout
+                    android:id="@+id/video2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/left_video2_title"/>
+        </RelativeLayout>
+    </LinearLayout>
+<LinearLayout
+        android:id="@+id/main_video_box"
+android:layout_width="0dp"
+android:layout_height="match_parent"
+android:layout_weight="1"
+android:layout_marginStart="5dp"
+android:layout_marginEnd="5dp"
+android:background="#000"
+android:orientation="vertical">
+    <TextView
+            android:id="@+id/main_video_title"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.2"
+            android:textColor="#fff"
+            android:text="主持人"/>
+    <RelativeLayout
+    android:id="@+id/main_video"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="2"/>
+</LinearLayout>
+    <LinearLayout
+            android:id="@+id/right_video_box"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+        <RelativeLayout
+                android:id="@+id/right_video1_box"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="#000">
+            <TextView
+                    android:id="@+id/right_video1_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#fff"
+                    android:text="成员3"/>
+            <RelativeLayout
+                    android:id="@+id/video3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/right_video1_title"/>
+        </RelativeLayout>
+        <RelativeLayout
+                android:id="@+id/right_video2_box"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="5dp"
+                android:background="#000">
+            <TextView
+                    android:id="@+id/right_video2_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#fff"
+                    android:text="成员4"/>
+            <RelativeLayout
+                    android:id="@+id/video4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/right_video2_title"/>
+        </RelativeLayout>
+    </LinearLayout>
+</LinearLayout>
+    <!-->
     <Button
             android:id="@+id/volume_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignLeft="@+id/video"
-            android:layout_alignBottom="@+id/video"
+            android:layout_alignLeft="@+id/videos_content"
+            android:layout_alignBottom="@+id/videos_content"
             android:background="#00000000"
             android:text="音量"
             android:textColor="#ffffff"
@@ -25,19 +135,126 @@
             android:id="@+id/full_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignRight="@+id/video"
-            android:layout_alignBottom="@+id/video"
+            android:layout_alignRight="@+id/videos_content"
+            android:layout_alignBottom="@+id/videos_content"
             android:background="#00000000"
             android:text="全屏"
             android:textColor="#ffffff"
     />
-    <Button
-            android:id="@+id/SwCamerabutton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"
-            android:text="打开窗口" />
+    <-->
+    <android.support.v4.widget.DrawerLayout
+    android:id="@+id/operators_box"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_below="@+id/videos_content"
+    >
+        <RelativeLayout
+        android:id="@+id/main_operators"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+            <android.support.design.widget.TabLayout
+            android:id="@+id/tools_bar"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:background="@drawable/bar_bg"
+            app:tabBackground="@drawable/bar_bg"
+            app:tabIndicatorColor="@color/blue"
+            app:tabIndicatorHeight="2dp"
+            app:tabTextColor="@color/gray"
+            app:tabSelectedTextColor="@color/blue"
+            app:tabTextAppearance="@style/tabStyle"/>
+            <android.support.v4.view.ViewPager
+            android:id="@+id/operators"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/tools_bar"/>
+
+
+        </RelativeLayout>
+        <LinearLayout
+                android:id="@+id/other_operators"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left|center_vertical"
+
+                android:orientation="vertical">
+            <RelativeLayout
+                    android:id="@+id/camera_switch_box"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
+           <ImageView
+           android:id="@+id/camera_switch"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:src="@drawable/ic_camera"/>
+                <TextView
+                android:id="@+id/camera_switch_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/camera_switch"
+                android:text="摄像头"/>
+            </RelativeLayout>
+            <RelativeLayout
+                    android:id="@+id/micPhone_switch_box"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
+                <ImageView
+                        android:id="@+id/micPhone_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_micphone"/>
+                <TextView
+                        android:id="@+id/micPhone_switch_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/micPhone_switch"
+                        android:text="麦克风"/>
+            </RelativeLayout>
+            <RelativeLayout
+                    android:id="@+id/start_switch_box"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
+                <ImageView
+                        android:id="@+id/start_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_start"/>
+                <TextView
+                        android:id="@+id/start_switch_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/start_switch"
+                        android:textColor="@color/start_red"
+                        android:text="开始录制"/>
+            </RelativeLayout>
+            <RelativeLayout
+                    android:id="@+id/end_switch_box"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
+                <ImageView
+                        android:id="@+id/end_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/exit_grey"
+                        android:clickable="false"/>
+                <TextView
+                        android:id="@+id/end_switch_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/end_switch"
+                        android:textColor="@color/exit_red"
+                        android:text="结束录制"/>
+            </RelativeLayout>
+        </LinearLayout>
+
+        <!--标题栏-->
+    </android.support.v4.widget.DrawerLayout>
+
 
 </RelativeLayout>
 

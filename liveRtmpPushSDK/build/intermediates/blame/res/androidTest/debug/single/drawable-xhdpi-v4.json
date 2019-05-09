@@ -12,10 +12,6 @@
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-xhdpi-v4\\abc_ic_star_black_36dp.png"
     },
     {
-        "merged": "D:\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-xhdpi-v4\\ic_launcher.png",
-        "source": "D:\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\bundles\\debug\\res\\drawable-xhdpi-v4\\ic_launcher.png"
-    },
-    {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-xhdpi-v4\\abc_btn_radio_to_on_mtrl_015.png",
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-xhdpi-v4\\abc_btn_radio_to_on_mtrl_015.png"
     },
@@ -94,10 +90,6 @@
     {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-xhdpi-v4\\abc_ic_star_half_black_36dp.png",
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-xhdpi-v4\\abc_ic_star_half_black_36dp.png"
-    },
-    {
-        "merged": "E:\\gitdir\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-xhdpi-v4\\ic_launcher.png",
-        "source": "E:\\gitdir\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\bundles\\debug\\res\\drawable-xhdpi-v4\\ic_launcher.png"
     },
     {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-xhdpi-v4\\abc_list_selector_disabled_holo_dark.9.png",

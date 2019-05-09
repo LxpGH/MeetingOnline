@@ -68,10 +68,6 @@
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-hdpi-v4\\abc_scrubber_control_to_pressed_mtrl_000.png"
     },
     {
-        "merged": "E:\\gitdir\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-hdpi-v4\\ic_launcher.png",
-        "source": "E:\\gitdir\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\bundles\\debug\\res\\drawable-hdpi-v4\\ic_launcher.png"
-    },
-    {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-hdpi-v4\\abc_tab_indicator_mtrl_alpha.9.png",
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-hdpi-v4\\abc_tab_indicator_mtrl_alpha.9.png"
     },
@@ -130,10 +126,6 @@
     {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-hdpi-v4\\abc_ic_menu_share_mtrl_alpha.png",
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable-hdpi-v4\\abc_ic_menu_share_mtrl_alpha.png"
-    },
-    {
-        "merged": "D:\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-hdpi-v4\\ic_launcher.png",
-        "source": "D:\\android_rtmppush_sdk\\liveRtmpPushSDK\\build\\intermediates\\bundles\\debug\\res\\drawable-hdpi-v4\\ic_launcher.png"
     },
     {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\androidTest\\debug\\drawable-hdpi-v4\\abc_list_pressed_holo_light.9.png",
