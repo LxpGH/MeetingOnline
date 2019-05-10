@@ -13,6 +13,7 @@ import android.hardware.camera2.CameraManager;
 import android.media.*;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.os.*;
+import android.provider.MediaStore;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -28,6 +29,10 @@ import com.alex.livertmppushsdk.RtmpSessionManager;
 import com.alex.livertmppushsdk.SWVideoEncoder;
 
 import com.design.lxp.MyUtils.MUtils;
+import okhttp3.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 import tv.danmaku.ijk.media.player.MediaInfo;
@@ -140,6 +145,33 @@ public class MeetingRoomActivity extends AppCompatActivity {
         params.addRule(RelativeLayout.ALIGN_TOP,(view.findViewById(R.id.preview_box).getId()));
         params.addRule(RelativeLayout.ALIGN_END,(view.findViewById(R.id.preview_box).getId()));
         sfViewEx.setLayoutParams(params);
+        sfh_Callback=new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder surfaceHolder) {
+                Log.v("===========","我执行过了!");
+                if (mCamera != null) {
+                    InitCamera();
+                    return;
+                }
+                mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_FRONT);//开启摄像头
+                InitCamera();
+            }
+            @Override
+            public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+                mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                    @Override
+                    public void onAutoFocus(boolean success, Camera camera) {
+                        if(success){
+                            InitCamera();
+                            mCamera.cancelAutoFocus();
+                        }
+                    }
+                });
+            }
+            @Override
+            public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+            }
+        };
         sfViewEx.getHolder().setFixedSize(HEIGHT_DEF,WIDTH_DEF);
         sfViewEx.setZ(0);/****通过调整显示层次来控制按纽显示在sufaceView的上层****/
         sfViewEx.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -173,13 +205,18 @@ public class MeetingRoomActivity extends AppCompatActivity {
     public void closeDialog(){
         wm1.removeView(closeBtn);
         isCloseBtnAdd=false;/**需要设置成false,以保证再次添加closeBtn时状态对应**/
+        //Stop();
         mCamera.setPreviewCallback(null);
         mCamera.stopPreview();
+        //包括停止图像音频数据处理推流线程,关闭音频采集设备
+        //_AudioRecorder.stop();
+        //Stop();
         wm.removeView(sfViewEx);
         //mCamera.release();如果还需继续使用,不能释放
         windowManager.removeView(view);
         /**关闭窗口时,在这里释放iMediaPlayer资源，正常应该在点击退出时关闭**/
         this.release();
+        this.release1();
         camera_switch.setImageResource(R.drawable.ic_camera);
         camera_switch.setEnabled(true);
         end_switch.setImageResource(R.drawable.exit_grey);
@@ -221,6 +258,22 @@ public class MeetingRoomActivity extends AppCompatActivity {
         lp1.y=lp.y-lp.height/2+lp1.height/4;//-580
         wm1.addView(closeBtn,lp1);
     }
+    private Boolean isFirst=true;
+    private Runnable urlUpdate=new Runnable() {
+        @Override
+        public void run() {
+            _rtmpUrl=v1_url;
+            initAudioRecoder();
+            RtmpStartMessage();
+            initSurfaceView();
+            initCloseBtn();
+            add_view();
+            add_surface();//动态添加
+            add_closeBtn();
+            //play();
+        }
+    };
+    private final Handler urlHandler=new Handler();
     public void initView(){
         cRelative=findViewById(R.id.cRelative);
         view=View.inflate(MeetingRoomActivity.this,R.layout.preview_window,null);
@@ -229,46 +282,31 @@ public class MeetingRoomActivity extends AppCompatActivity {
         operators_box.openDrawer(Gravity.START);
         /**初始化工具栏**/
         initOperator();
-        sfh_Callback=new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder surfaceHolder) {
-                Log.v("===========","我执行过了!");
-                if (mCamera != null) {
-                    InitCamera();
-                    return;
-                }
-                mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_FRONT);//开启摄像头
-                InitCamera();
-            }
-            @Override
-            public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-                mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                    @Override
-                    public void onAutoFocus(boolean success, Camera camera) {
-                        if(success){
-                            InitCamera();
-                            mCamera.cancelAutoFocus();
-                        }
-                    }
-                });
-            }
-            @Override
-            public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-            }
-        };
+
         /**四个按纽的监听器设置**/
         camera_switch=findViewById(R.id.camera_switch);
         end_switch=findViewById(R.id.end_switch);
         camera_switch.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
                 if(v.getId()==camera_switch.getId()){
-                    initSurfaceView();
-                    initCloseBtn();
-                    add_view();
-                    add_surface();//动态添加
-                    add_closeBtn();
+                    if(isFirst){
+                        String meet_id="000001";
+                        getVideoURL(meet_id);
+                        Log.v("推流地址",""+_rtmpUrl);
+                        urlHandler.postDelayed(urlUpdate,500);
+                        isFirst=false;
+                    }else{
+                        initSurfaceView();
+                        initCloseBtn();
+                        add_view();
+                        add_surface();//动态添加
+                        add_closeBtn();
+                        //play();
+                    }
+                    //必须在摄像机初始化前开始推流,因为如果相机先初始化,会先给队列加锁而无法释放出来继续执行
+
                     isCloseBtnAdd=true;
-                    play();//so库加载和监听器事件加载
+                    //so库加载和监听器事件加载
                     /***只有开始预览时才获取视频流，这样才不会导致视频与音频脱节而导致只有声音，没有画面，play()获取到的流是其执行那一刻开始算起的***/
                     /******问题出在xml定义sufaceView时,已经创建,无法回调surfaceCreated()方法，导致无法打开摄像头*******/
                     camera_switch.setImageResource(R.drawable.ic_camera_open);
@@ -356,6 +394,7 @@ public class MeetingRoomActivity extends AppCompatActivity {
         }
         mCamera.cancelAutoFocus();
         mCamera.startPreview();
+        Log.v("InitCamera","InitCamera.....");
     }
 
     private  AudioRecord _AudioRecorder=null;
@@ -395,10 +434,10 @@ public class MeetingRoomActivity extends AppCompatActivity {
         _AudioRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
                 SAMPLE_RATE_DEF, AudioFormat.CHANNEL_CONFIGURATION_STEREO,
                 AudioFormat.ENCODING_PCM_16BIT, _iRecorderBufferSize);
-        if(isDeviceSupport()){
+        /**if(isDeviceSupport()){
             initAEC(getAudioSession());
             initAudioTrack();
-        }
+        }**/
         //AudioRecord(采集来源(麦克风),采样率,采样声道,采样格式和每次采样大小,缓冲区大小)
         _RecorderBuffer = new byte[_iRecorderBufferSize];
 
@@ -431,16 +470,19 @@ public class MeetingRoomActivity extends AppCompatActivity {
         @Override
         public void run() {
             while(!_h264EncoderThread.isInterrupted()&&_bStartFlag){
+
                 int iSize=YUVQueue.size();
                 if(iSize>0){
-                    yuvQueueLock.lock();//设置锁，保证摄像头预览函数过早清空YUVQueue
+                    yuvQueueLock.lock();//设置锁,保证摄像头预览函数过早清空YUVQueue
                     byte[] yuvData=YUVQueue.poll();
                     yuvQueueLock.unlock();
                     if(yuvData==null){
                         continue;
                     }
                     yuvEditData=_swEncH264.YUV420pRotate270(yuvData,HEIGHT_DEF,WIDTH_DEF);
+                    /**这句话处理后为空值**/
                     byte[] _h264Data=_swEncH264.EncoderH264(yuvEditData);
+                    Log.v("数据插入成功!",""+yuvEditData);
                     if(_h264Data!=null) {
                         rsMgr.InsertVideoData(_h264Data);
                     }
@@ -451,6 +493,7 @@ public class MeetingRoomActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
+
             YUVQueue.clear();//不能写进while层
         }
     };
@@ -486,9 +529,9 @@ public class MeetingRoomActivity extends AppCompatActivity {
 
     public void Start(){
         rsMgr=new RtmpSessionManager();
-        _rtmpUrl="rtmp://ossrs.net/live/12345678";
+       //_rtmpUrl="rtmp://ossrs.net/live/12345678";
         rsMgr.Start(_rtmpUrl);
-
+        Log.v("Start:","Start........");
         int iFormat=_iCameraCodecType;
         _swEncH264=new SWVideoEncoder(WIDTH_DEF,HEIGHT_DEF,FRAMERATE_DEF,BITRATE_DEF);
         _swEncH264.start(iFormat);
@@ -506,17 +549,27 @@ public class MeetingRoomActivity extends AppCompatActivity {
     public void Stop(){
         _bStartFlag=false;
 
-        _AacEncoderThread.interrupt();
-        _h264EncoderThread.interrupt();
-
+       _AacEncoderThread.interrupt();
+       _h264EncoderThread.interrupt();
         _AudioRecorder.stop();
         _swEncH264.stop();
 
         rsMgr.Stop();
-
         yuvQueueLock.lock();
         YUVQueue.clear();
         yuvQueueLock.unlock();
+    }
+    public void ReStart(){
+        _bStartFlag=true;
+        int iFormat=_iCameraCodecType;
+        _swEncH264.start(iFormat);
+        _h264EncoderThread.start();
+        _AacEncoderThread.start();
+
+        _AudioRecorder.startRecording();
+
+        //rsMgr.Start(_rtmpUrl);
+        YUVQueue=new LinkedList<byte[]>();
     }
     public void RtmpStartMessage(){
         Message msg=new Message();
@@ -526,12 +579,19 @@ public class MeetingRoomActivity extends AppCompatActivity {
         msg.setData(b);
         mHandler.sendMessage(msg);
     }
+    //private Boolean isClose=false;
     public void initAll(){
         initView();
-        initAudioRecoder();
-        Intent camera_intent=new Intent();
+        /**进入会议室，预先加载服务器地址和播放器，等待推流服务器数据**/
+        getPlayUrl("000001");
+        /***需要延迟一定时间等待服务器分发推流地址***/
+        playHandler.postDelayed(playUpdate,1000);
+        //initAudioRecoder();
+        //RtmpStartMessage();
+        //Intent camera_intent=new Intent();
         //_rtmpUrl=camera_intent.getStringExtra(StartActivity.RTMPURL_MESSAGE);
-        RtmpStartMessage();
+
+        //isClose=!isClose;
     }
     /**********WEbRTC*************/
 
@@ -550,8 +610,9 @@ public class MeetingRoomActivity extends AppCompatActivity {
     private String mVideoUrl1=null;
     private String mVideoUrl2=null;
     private String mVideoUrl3=null;
+    private String mVideoUrl4=null;
 
-    private VideoPlayerListener listener,listener1,listener2,listener3;
+    private VideoPlayerListener listener,listener1,listener2,listener3,listener4;
 
     public abstract class VideoPlayerListener implements IMediaPlayer.OnBufferingUpdateListener,
             IMediaPlayer.OnCompletionListener, IMediaPlayer.OnPreparedListener, IMediaPlayer.OnInfoListener,
@@ -568,6 +629,7 @@ public class MeetingRoomActivity extends AppCompatActivity {
             load();
         }
     }
+
     public void setVideo1Url(String url1){
         if(TextUtils.equals(null,mVideoUrl1)){
             mVideoUrl1=url1;
@@ -575,6 +637,36 @@ public class MeetingRoomActivity extends AppCompatActivity {
         }else{
             mVideoUrl1=url1;
             load1();
+        }
+    }
+
+    public void setVideo2Url(String url2){
+        if(TextUtils.equals(null,mVideoUrl2)){
+            mVideoUrl2=url2;
+            createVideo2Content();
+        }else{
+            mVideoUrl2=url2;
+            load2();
+        }
+    }
+
+    public void setVideo3Url(String url3){
+        if(TextUtils.equals(null,mVideoUrl3)){
+            mVideoUrl3=url3;
+            createVideo3Content();
+        }else{
+            mVideoUrl3=url3;
+            load3();
+        }
+    }
+
+    public void setVideo4Url(String url4){
+        if(TextUtils.equals(null,mVideoUrl4)){
+            mVideoUrl4=url4;
+            createVideo4Content();
+        }else{
+            mVideoUrl4=url4;
+            load4();
         }
     }
 
@@ -626,6 +718,92 @@ public class MeetingRoomActivity extends AppCompatActivity {
         video1.getHolder().addCallback(videoCallBack1);
         this.addContentView(video1,lp_video);
     }
+
+    private void createVideo2Content(){
+        video2=new SurfaceView(this);
+        RelativeLayout s=findViewById(R.id.left_video2_box);
+        TextView t=findViewById(R.id.left_video2_title);
+        MUtils mUtils=new MUtils();
+        int lp_height=s.getHeight()-t.getHeight()-mUtils.dip2px(this,5);
+        int lp_width=(int)(lp_height*((float)WIDTH_DEF/(float)HEIGHT_DEF));
+        Log.v("-------------------------------------",""+lp_height+" "+lp_width);
+        RelativeLayout.LayoutParams lp_video=new RelativeLayout.LayoutParams(
+                lp_width,lp_height);
+        lp_video.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        lp_video.addRule(RelativeLayout.ALIGN_TOP,R.id.video2);
+        video2.setLayoutParams(lp_video);
+        video2.setZ(0);
+        int[] location=new int[2];
+        s.getLocationInWindow(location);
+        /**水平居中**/
+        int x=location[0]+(int)(s.getWidth()*0.5-lp_width*0.5);
+        video2.setX(x);
+        video2.setY(location[1]);
+        video2.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        video2.getHolder().setKeepScreenOn(true);
+        video2.getHolder().setFixedSize(WIDTH_DEF,HEIGHT_DEF);
+        video2.getHolder().setFormat(PixelFormat.OPAQUE);
+        video2.getHolder().addCallback(videoCallBack2);
+        this.addContentView(video2,lp_video);
+    }
+
+
+    private void createVideo3Content(){
+        video3=new SurfaceView(this);
+        RelativeLayout s=findViewById(R.id.right_video1_box);
+        TextView t=findViewById(R.id.right_video1_title);
+        MUtils mUtils=new MUtils();
+        int lp_height=s.getHeight()-t.getHeight()-mUtils.dip2px(this,5);
+        int lp_width=(int)(lp_height*((float)WIDTH_DEF/(float)HEIGHT_DEF));
+        Log.v("-------------------------------------",""+lp_height+" "+lp_width);
+        RelativeLayout.LayoutParams lp_video=new RelativeLayout.LayoutParams(
+                lp_width,lp_height);
+        lp_video.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        lp_video.addRule(RelativeLayout.ALIGN_TOP,R.id.video3);
+        video3.setLayoutParams(lp_video);
+        video3.setZ(0);
+        int[] location=new int[2];
+        s.getLocationInWindow(location);
+        /**水平居中**/
+        int x=location[0]+(int)(s.getWidth()*0.5-lp_width*0.5);
+        video3.setX(x);
+        video3.setY(location[1]);
+        video3.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        video3.getHolder().setKeepScreenOn(true);
+        video3.getHolder().setFixedSize(WIDTH_DEF,HEIGHT_DEF);
+        video3.getHolder().setFormat(PixelFormat.OPAQUE);
+        video3.getHolder().addCallback(videoCallBack3);
+        this.addContentView(video3,lp_video);
+    }
+
+    private void createVideo4Content(){
+        video4=new SurfaceView(this);
+        RelativeLayout s=findViewById(R.id.right_video2_box);
+        TextView t=findViewById(R.id.right_video2_title);
+        MUtils mUtils=new MUtils();
+        int lp_height=s.getHeight()-t.getHeight()-mUtils.dip2px(this,5);
+        int lp_width=(int)(lp_height*((float)WIDTH_DEF/(float)HEIGHT_DEF));
+        Log.v("-------------------------------------",""+lp_height+" "+lp_width);
+        RelativeLayout.LayoutParams lp_video=new RelativeLayout.LayoutParams(
+                lp_width,lp_height);
+        lp_video.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        lp_video.addRule(RelativeLayout.ALIGN_TOP,R.id.video4);
+        video4.setLayoutParams(lp_video);
+        video4.setZ(0);
+        int[] location=new int[2];
+        s.getLocationInWindow(location);
+        /**水平居中**/
+        int x=location[0]+(int)(s.getWidth()*0.5-lp_width*0.5);
+        video4.setX(x);
+        video4.setY(location[1]);
+        video4.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        video4.getHolder().setKeepScreenOn(true);
+        video4.getHolder().setFixedSize(WIDTH_DEF,HEIGHT_DEF);
+        video4.getHolder().setFormat(PixelFormat.OPAQUE);
+        video4.getHolder().addCallback(videoCallBack4);
+        this.addContentView(video4,lp_video);
+    }
+
     public void load(){
         createPlayer();
         try {
@@ -649,6 +827,45 @@ public class MeetingRoomActivity extends AppCompatActivity {
 //    Log.v("获取到的视频分辨率",iMediaPlayer.getVideoWidth()+","+iMediaPlayer.getVideoHeight());
         iMediaPlayer1.setDisplay(video1.getHolder());
         iMediaPlayer1.prepareAsync();
+    }
+
+    public void load2(){
+        createPlayer2();
+        try {
+            iMediaPlayer2.setDataSource(mVideoUrl2);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        video2.measure(WIDTH_DEF,HEIGHT_DEF);
+//    Log.v("获取到的视频分辨率",iMediaPlayer.getVideoWidth()+","+iMediaPlayer.getVideoHeight());
+        iMediaPlayer2.setDisplay(video2.getHolder());
+        iMediaPlayer2.prepareAsync();
+    }
+
+    public void load3(){
+        createPlayer3();
+        try {
+            iMediaPlayer3.setDataSource(mVideoUrl3);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        video3.measure(WIDTH_DEF,HEIGHT_DEF);
+//    Log.v("获取到的视频分辨率",iMediaPlayer.getVideoWidth()+","+iMediaPlayer.getVideoHeight());
+        iMediaPlayer3.setDisplay(video3.getHolder());
+        iMediaPlayer3.prepareAsync();
+    }
+
+    public void load4(){
+        createPlayer4();
+        try {
+            iMediaPlayer4.setDataSource(mVideoUrl4);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        video4.measure(WIDTH_DEF,HEIGHT_DEF);
+//    Log.v("获取到的视频分辨率",iMediaPlayer.getVideoWidth()+","+iMediaPlayer.getVideoHeight());
+        iMediaPlayer4.setDisplay(video4.getHolder());
+        iMediaPlayer4.prepareAsync();
     }
 
     public void createPlayer(){
@@ -732,6 +949,106 @@ public class MeetingRoomActivity extends AppCompatActivity {
             iMediaPlayer1.setOnErrorListener(listener1);
         }
     }
+
+    public void createPlayer2(){
+        if(iMediaPlayer2!=null){
+            //清空脏数据
+            iMediaPlayer2.stop();
+            iMediaPlayer2.setDisplay(null);
+            iMediaPlayer2.release();
+        }
+        IjkMediaPlayer ijkMediaPlayer=new IjkMediaPlayer();
+        ijkMediaPlayer.native_setLogLevel(IjkMediaPlayer.IJK_LOG_DEBUG);
+        /**otherMethod**/
+        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 0);
+
+        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "http-detect-range-support", 0);
+
+//                        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_CODEC, "skip_loop_filter", 48);
+        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_CODEC, "skip_loop_filter", 8);
+        //YYH add
+        ijkMediaPlayer.setOption(1, "analyzemaxduration", 100L);
+        ijkMediaPlayer.setOption(4, "packet-buffering", 0L);
+        ijkMediaPlayer.setOption(1, "probesize", 10240L);
+        ijkMediaPlayer.setOption(4, "framedrop", 1L);
+        ijkMediaPlayer.setOption(1, "flush_packets", 1L);
+        iMediaPlayer2=ijkMediaPlayer;
+        if(listener2!=null){
+            iMediaPlayer2.setOnInfoListener(listener2);
+            iMediaPlayer2.setOnPreparedListener(listener2);
+            iMediaPlayer2.setOnSeekCompleteListener(listener2);
+            iMediaPlayer2.setOnErrorListener(listener2);
+            iMediaPlayer2.setOnBufferingUpdateListener(listener2);
+
+        }
+    }
+
+    public void createPlayer3(){
+        if(iMediaPlayer3!=null){
+            //清空脏数据
+            iMediaPlayer3.stop();
+            iMediaPlayer3.setDisplay(null);
+            iMediaPlayer3.release();
+        }
+        IjkMediaPlayer ijkMediaPlayer=new IjkMediaPlayer();
+        ijkMediaPlayer.native_setLogLevel(IjkMediaPlayer.IJK_LOG_DEBUG);
+        /**otherMethod**/
+        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 0);
+
+        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "http-detect-range-support", 0);
+
+//                        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_CODEC, "skip_loop_filter", 48);
+        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_CODEC, "skip_loop_filter", 8);
+        //YYH add
+        ijkMediaPlayer.setOption(1, "analyzemaxduration", 100L);
+        ijkMediaPlayer.setOption(1, "probesize", 10240L);
+        ijkMediaPlayer.setOption(4, "packet-buffering", 0L);
+        ijkMediaPlayer.setOption(4, "framedrop", 1L);
+        ijkMediaPlayer.setOption(1, "flush_packets", 1L);
+        iMediaPlayer3=ijkMediaPlayer;
+        if(listener3!=null){
+            iMediaPlayer3.setOnInfoListener(listener3);
+            iMediaPlayer3.setOnPreparedListener(listener3);
+            iMediaPlayer3.setOnSeekCompleteListener(listener3);
+            iMediaPlayer3.setOnErrorListener(listener3);
+            iMediaPlayer3.setOnBufferingUpdateListener(listener3);
+
+        }
+    }
+
+    public void createPlayer4(){
+        if(iMediaPlayer4!=null){
+            //清空脏数据
+            iMediaPlayer4.stop();
+            iMediaPlayer4.setDisplay(null);
+            iMediaPlayer4.release();
+        }
+        IjkMediaPlayer ijkMediaPlayer=new IjkMediaPlayer();
+        ijkMediaPlayer.native_setLogLevel(IjkMediaPlayer.IJK_LOG_DEBUG);
+        /**otherMethod**/
+        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 0);
+
+        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "http-detect-range-support", 0);
+
+//                        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_CODEC, "skip_loop_filter", 48);
+        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_CODEC, "skip_loop_filter", 8);
+        //YYH add
+        ijkMediaPlayer.setOption(1, "analyzemaxduration", 100L);
+        ijkMediaPlayer.setOption(4, "packet-buffering", 0L);
+        ijkMediaPlayer.setOption(1, "probesize", 10240L);
+        ijkMediaPlayer.setOption(4, "framedrop", 1L);
+        ijkMediaPlayer.setOption(1, "flush_packets", 1L);
+        iMediaPlayer4=ijkMediaPlayer;
+        if(listener4!=null){
+            iMediaPlayer4.setOnInfoListener(listener4);
+            iMediaPlayer4.setOnPreparedListener(listener4);
+            iMediaPlayer4.setOnSeekCompleteListener(listener4);
+            iMediaPlayer4.setOnErrorListener(listener4);
+            iMediaPlayer4.setOnBufferingUpdateListener(listener4);
+        }
+    }
+
+
     public void setListener(VideoPlayerListener listener){
         this.listener=listener;
         if(iMediaPlayer!=null){
@@ -742,6 +1059,27 @@ public class MeetingRoomActivity extends AppCompatActivity {
         this.listener1=listener1;
         if(iMediaPlayer1!=null){
             iMediaPlayer1.setOnPreparedListener(listener1);
+        }
+    }
+
+    public void setListener2(VideoPlayerListener listener2){
+        this.listener2=listener2;
+        if(iMediaPlayer2!=null){
+            iMediaPlayer2.setOnPreparedListener(listener2);
+        }
+    }
+
+    public void setListener3(VideoPlayerListener listener3){
+        this.listener3=listener3;
+        if(iMediaPlayer3!=null){
+            iMediaPlayer3.setOnPreparedListener(listener3);
+        }
+    }
+
+    public void setListener4(VideoPlayerListener listener4){
+        this.listener4=listener4;
+        if(iMediaPlayer4!=null){
+            iMediaPlayer4.setOnPreparedListener(listener4);
         }
     }
     /**
@@ -800,44 +1138,45 @@ public class MeetingRoomActivity extends AppCompatActivity {
     }
     /**video**/
 
+
     /**video1**/
     public void start1() {
-        if (iMediaPlayer != null) {
-            iMediaPlayer.start();
+        if (iMediaPlayer1 != null) {
+            iMediaPlayer1.start();
         }
     }
 
     public void release1() {
-        if (iMediaPlayer != null) {
-            iMediaPlayer.reset();
-            iMediaPlayer.release();
-            iMediaPlayer = null;
+        if (iMediaPlayer1 != null) {
+            iMediaPlayer1.reset();
+            iMediaPlayer1.release();
+            iMediaPlayer1 = null;
         }
     }
 
     public void pause1() {
-        if (iMediaPlayer != null) {
-            iMediaPlayer.pause();
+        if (iMediaPlayer1 != null) {
+            iMediaPlayer1.pause();
         }
     }
 
     public void stop1() {
-        if (iMediaPlayer != null) {
-            iMediaPlayer.stop();
+        if (iMediaPlayer1 != null) {
+            iMediaPlayer1.stop();
         }
     }
 
 
     public void reset1() {
-        if (iMediaPlayer != null) {
-            iMediaPlayer.reset();
+        if (iMediaPlayer1 != null) {
+            iMediaPlayer1.reset();
         }
     }
 
 
     public long getDuration1() {
-        if (iMediaPlayer != null) {
-            return iMediaPlayer.getDuration();
+        if (iMediaPlayer1 != null) {
+            return iMediaPlayer1.getDuration();
         } else {
             return 0;
         }
@@ -845,19 +1184,197 @@ public class MeetingRoomActivity extends AppCompatActivity {
 
 
     public long getCurrentPosition1() {
-        if (iMediaPlayer != null) {
-            return iMediaPlayer.getCurrentPosition();
+        if (iMediaPlayer1 != null) {
+            return iMediaPlayer1.getCurrentPosition();
         } else {
             return 0;
         }
     }
-    /**video1**/
 
     public void seekTo1(long l) {
-        if (iMediaPlayer != null) {
-            iMediaPlayer.seekTo(l);
+        if (iMediaPlayer1 != null) {
+            iMediaPlayer1.seekTo(l);
         }
     }
+    /**video1**/
+
+    /**video2**/
+    public void start2() {
+        if (iMediaPlayer2 != null) {
+            iMediaPlayer2.start();
+        }
+    }
+
+    public void release2() {
+        if (iMediaPlayer2 != null) {
+            iMediaPlayer2.reset();
+            iMediaPlayer2.release();
+            iMediaPlayer2 = null;
+        }
+    }
+
+    public void pause2() {
+        if (iMediaPlayer2 != null) {
+            iMediaPlayer2.pause();
+        }
+    }
+
+    public void stop2() {
+        if (iMediaPlayer2 != null) {
+            iMediaPlayer2.stop();
+        }
+    }
+
+
+    public void reset2() {
+        if (iMediaPlayer2 != null) {
+            iMediaPlayer2.reset();
+        }
+    }
+
+
+    public long getDuration2() {
+        if (iMediaPlayer2 != null) {
+            return iMediaPlayer2.getDuration();
+        } else {
+            return 0;
+        }
+    }
+
+
+    public long getCurrentPosition2() {
+        if (iMediaPlayer2 != null) {
+            return iMediaPlayer2.getCurrentPosition();
+        } else {
+            return 0;
+        }
+    }
+
+    public void seekTo2(long l) {
+        if (iMediaPlayer2 != null) {
+            iMediaPlayer2.seekTo(l);
+        }
+    }
+    /**video2**/
+
+    /**video3**/
+    public void start3() {
+        if (iMediaPlayer3 != null) {
+            iMediaPlayer3.start();
+        }
+    }
+
+    public void release3() {
+        if (iMediaPlayer3 != null) {
+            iMediaPlayer3.reset();
+            iMediaPlayer3.release();
+            iMediaPlayer3 = null;
+        }
+    }
+
+    public void pause3() {
+        if (iMediaPlayer3 != null) {
+            iMediaPlayer3.pause();
+        }
+    }
+
+    public void stop3() {
+        if (iMediaPlayer3 != null) {
+            iMediaPlayer3.stop();
+        }
+    }
+
+
+    public void reset3() {
+        if (iMediaPlayer3 != null) {
+            iMediaPlayer3.reset();
+        }
+    }
+
+
+    public long getDuration3() {
+        if (iMediaPlayer3 != null) {
+            return iMediaPlayer3.getDuration();
+        } else {
+            return 0;
+        }
+    }
+
+
+    public long getCurrentPosition3() {
+        if (iMediaPlayer3 != null) {
+            return iMediaPlayer3.getCurrentPosition();
+        } else {
+            return 0;
+        }
+    }
+
+    public void seekTo3(long l) {
+        if (iMediaPlayer3 != null) {
+            iMediaPlayer3.seekTo(l);
+        }
+    }
+    /**video3**/
+
+    /**video4**/
+    public void start4() {
+        if (iMediaPlayer4 != null) {
+            iMediaPlayer4.start();
+        }
+    }
+
+    public void release4() {
+        if (iMediaPlayer4 != null) {
+            iMediaPlayer4.reset();
+            iMediaPlayer4.release();
+            iMediaPlayer4 = null;
+        }
+    }
+
+    public void pause4() {
+        if (iMediaPlayer4 != null) {
+            iMediaPlayer4.pause();
+        }
+    }
+
+    public void stop4() {
+        if (iMediaPlayer4 != null) {
+            iMediaPlayer4.stop();
+        }
+    }
+
+
+    public void reset4() {
+        if (iMediaPlayer4 != null) {
+            iMediaPlayer4.reset();
+        }
+    }
+
+
+    public long getDuration4() {
+        if (iMediaPlayer4 != null) {
+            return iMediaPlayer4.getDuration();
+        } else {
+            return 0;
+        }
+    }
+
+
+    public long getCurrentPosition4() {
+        if (iMediaPlayer4 != null) {
+            return iMediaPlayer4.getCurrentPosition();
+        } else {
+            return 0;
+        }
+    }
+
+    public void seekTo4(long l) {
+        if (iMediaPlayer4 != null) {
+            iMediaPlayer4.seekTo(l);
+        }
+    }
+    /**video3**/
+
     private SurfaceHolder.Callback videoCallBack=new SurfaceHolder.Callback() {
         @Override
         public void surfaceCreated(SurfaceHolder surfaceHolder) {
@@ -887,56 +1404,187 @@ public class MeetingRoomActivity extends AppCompatActivity {
         }
     };
 
+    private SurfaceHolder.Callback videoCallBack2=new SurfaceHolder.Callback() {
+        @Override
+        public void surfaceCreated(SurfaceHolder surfaceHolder) {
+            load2();
+        }
+        @Override
+        public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+        }
+        @Override
+        public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+
+        }
+    };
+
+
+    private SurfaceHolder.Callback videoCallBack3=new SurfaceHolder.Callback() {
+        @Override
+        public void surfaceCreated(SurfaceHolder surfaceHolder) {
+            load3();
+        }
+        @Override
+        public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+        }
+        @Override
+        public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+
+        }
+    };
+
+    private SurfaceHolder.Callback videoCallBack4=new SurfaceHolder.Callback() {
+        @Override
+        public void surfaceCreated(SurfaceHolder surfaceHolder) {
+            load4();
+        }
+        @Override
+        public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+        }
+        @Override
+        public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+
+        }
+    };
+
+    private final String playServerUrl="http://192.168.191.1:8080/getPlayURL";
+    private int play_sit=-1;
+    private String play_url=null;
+    private String play1_url=null;
+    private String play2_url=null;
+    private String play3_url=null;
+    private String play4_url=null;
+
+    private Runnable playUpdate=new Runnable() {
+        @Override
+        public void run() {
+            play();
+        }
+    };
+    private final Handler playHandler=new Handler();
+    public void getPlayUrl(String meet_id){
+        OkHttpClient client=new OkHttpClient();
+        final MediaType JSON=MediaType.parse("application/json;charset=utf-8");
+        JSONObject playPostjsb=new JSONObject();
+        try {
+            playPostjsb.put("meet_id",meet_id);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RequestBody requestBody=RequestBody.create(JSON,playPostjsb.toString());
+        Request request=new Request.Builder()
+                        .url(playServerUrl)
+                        .post(requestBody)
+                        .build();
+        Call call=client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.v("获取播放流地址结果","失败!");
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+            if(response.isSuccessful()){
+                String rspStr=response.body().string();
+                Log.v("获取播放流地址结果","成功!");
+                try {
+                    JSONArray rspJsa=new JSONArray(rspStr);
+                    int length=rspJsa.length();
+                    for(int i=0;i<length;i++){
+                        JSONObject rspJsb=rspJsa.getJSONObject(i);
+                        int url_suffix=rspJsb.getInt("address_id");
+                        int sit=rspJsb.getInt("address_sit");
+                        switch(sit){
+                            case 0:
+                                play_url=url_prefix+url_suffix;
+                                Log.v("服务器地址",""+play_url);
+                                break;
+                            case 1:
+                                play1_url=url_prefix+url_suffix;
+                                break;
+                            case 2:
+                                play2_url=url_prefix+url_suffix;
+                                break;
+                            case 3:
+                                play3_url=url_prefix+url_suffix;
+                                break;
+                            case 4:
+                                play4_url=url_prefix+url_suffix;
+                                break;
+                        }
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            }
+        });
+    }
     public void play(){
         try {
+            VideoPlayerListener video_listener=new VideoPlayerListener() {
+                @Override
+                public void onBufferingUpdate(IMediaPlayer iMediaPlayer, int i) {
+                    Log.v("-------------","我使用的sessionID:"+iMediaPlayer.getAudioSessionId());
+                }
+
+                @Override
+                public void onCompletion(IMediaPlayer iMediaPlayer) {
+
+                }
+
+                @Override
+                public boolean onError(IMediaPlayer iMediaPlayer, int i, int i1) {
+                    return false;
+                }
+
+                @Override
+                public boolean onInfo(IMediaPlayer iMediaPlayer, int i, int i1) {
+                    return false;
+                }
+
+                @Override
+                public void onPrepared(IMediaPlayer iMediaPlayer) {
+                    iMediaPlayer.start();
+                }
+
+                @Override
+                public void onSeekComplete(IMediaPlayer iMediaPlayer) {
+
+                }
+
+                @Override
+                public void onVideoSizeChanged(IMediaPlayer iMediaPlayer, int i, int i1, int i2, int i3) {
+
+                }
+            };
             IjkMediaPlayer.loadLibrariesOnce(null);
             IjkMediaPlayer.native_profileBegin("libijkplayer.so");
+            String v_url="rtmp://ossrs.net/live/1";
+            this.setListener(video_listener);
+            this.setVideoUrl(play_url);
+            //String v1_url="rtmp://ossrs.net/live/12345676";
+            this.setListener1(video_listener);
+            Log.v("窗口1地址",play1_url);
+            this.setVideo1Url(play1_url);
+
+            this.setListener2(video_listener);
+            this.setVideo2Url(play2_url);
+
+            this.setListener3(video_listener);
+            this.setVideo3Url(play3_url);
+
+            this.setListener4(video_listener);
+            this.setVideo4Url(play4_url);
         }catch(Exception e){
             this.finish();
         }
-        VideoPlayerListener video_listener=new VideoPlayerListener() {
-            @Override
-            public void onBufferingUpdate(IMediaPlayer iMediaPlayer, int i) {
-                Log.v("-------------","我使用的sessionID:"+iMediaPlayer.getAudioSessionId());
-            }
-
-            @Override
-            public void onCompletion(IMediaPlayer iMediaPlayer) {
-
-            }
-
-            @Override
-            public boolean onError(IMediaPlayer iMediaPlayer, int i, int i1) {
-                return false;
-            }
-
-            @Override
-            public boolean onInfo(IMediaPlayer iMediaPlayer, int i, int i1) {
-                return false;
-            }
-
-            @Override
-            public void onPrepared(IMediaPlayer iMediaPlayer) {
-                iMediaPlayer.start();
-            }
-
-            @Override
-            public void onSeekComplete(IMediaPlayer iMediaPlayer) {
-
-            }
-
-            @Override
-            public void onVideoSizeChanged(IMediaPlayer iMediaPlayer, int i, int i1, int i2, int i3) {
-
-            }
-        };
-        String v_url="rtmp://ossrs.net/live/12345678";
-        this.setListener(video_listener);
-        this.setVideoUrl(v_url);
-        String v1_url="rtmp://ossrs.net/live/12345676";
-        this.setListener1(video_listener);
-        this.setVideo1Url(v_url);
-
     }
     /**********播放端拉流*************/
 
@@ -1037,9 +1685,68 @@ public class MeetingRoomActivity extends AppCompatActivity {
 
         tools_bar.setOnTabSelectedListener(toolsListener);
     }
+    final String videoServerUrl="http://192.168.191.1:8080/getVideoURL";
+    //推流地址固定前缀
+    private final String url_prefix="rtmp://ossrs.net/live/";
+    /**5个视频位的推流/拉流地址**/
+    private String v_url,v1_url,v2_url,v3_url,v4_url;
+    private int sit_num=-1;
+    public void getVideoURL(String meet_id){
+        OkHttpClient client=new OkHttpClient();
+        final MediaType JSON=MediaType.parse("application/json;charset=utf-8");
+        final JSONObject recordPostJson=new JSONObject();
+        try {
+            recordPostJson.put("meet_id",meet_id);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RequestBody requestBody=RequestBody.create(JSON,recordPostJson.toString());
+        Request request=new Request.Builder()
+                        .url(videoServerUrl)
+                        .post(requestBody)
+                        .build();
+        Call call=client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.v("获取推流服务器地址请求结果","失败!");
+            }
 
-    public void initOtherOperators(){
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if(response.isSuccessful()){
+                    String rspStr=response.body().string();
+                    try {
+                        JSONObject rspJsb=new JSONObject(rspStr);
+                        String url_suffix=rspJsb.getString("address_id");
+                        int seat=rspJsb.getInt("address_sit");
 
+                        switch (seat){
+                            case 1:
+                                sit_num=1;
+                                v1_url=url_prefix+url_suffix;
+                                Log.v("v1_url",""+v1_url);
+                                break;
+                            case 2:
+                                sit_num=2;
+                                v2_url=url_prefix+url_suffix;
+                                break;
+                            case 3:
+                                sit_num=4;
+                                v3_url=url_prefix+url_suffix;
+                                break;
+                            case 4:
+                                sit_num=4;
+                                v4_url=url_prefix+url_suffix;
+                                break;
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+        });
     }
     private DrawerLayout operators_box;
     private ViewPager tool_vp;
@@ -1119,7 +1826,7 @@ public class MeetingRoomActivity extends AppCompatActivity {
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.M){
             //判断是否申请过
             int REQUEST_CODE_CONTACT=101;
-            String[] permissions={Manifest.permission.CAMERA,Manifest.permission.SYSTEM_ALERT_WINDOW,Manifest.permission.RECORD_AUDIO
+            String[] permissions={Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.CAMERA,Manifest.permission.SYSTEM_ALERT_WINDOW,Manifest.permission.RECORD_AUDIO
                     ,Manifest.permission.MODIFY_AUDIO_SETTINGS};
             for(String str:permissions){
                 if(this.checkSelfPermission(str)!=PackageManager.PERMISSION_GRANTED){

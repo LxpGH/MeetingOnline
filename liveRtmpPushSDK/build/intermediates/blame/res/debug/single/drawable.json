@@ -4,12 +4,12 @@
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\ffc3d7121c5eff8404485b2e3e88c3d1e75520c5\\output\\res\\drawable\\notification_bg_low.xml"
     },
     {
-        "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\debug\\drawable\\abc_ic_menu_overflow_material.xml",
-        "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable\\abc_ic_menu_overflow_material.xml"
-    },
-    {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\debug\\drawable\\abc_ic_ab_back_material.xml",
         "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable\\abc_ic_ab_back_material.xml"
+    },
+    {
+        "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\debug\\drawable\\abc_ic_menu_overflow_material.xml",
+        "source": "C:\\Users\\Administrator\\.android\\build-cache\\b8e5d0f80e1c71f38bd6b7db701aad0ba0fbc01c\\output\\res\\drawable\\abc_ic_menu_overflow_material.xml"
     },
     {
         "merged": "D:\\MeetingOnline\\liveRtmpPushSDK\\build\\intermediates\\res\\merged\\debug\\drawable\\abc_item_background_holo_light.xml",

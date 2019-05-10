@@ -213,6 +213,7 @@ android:orientation="vertical">
                         android:layout_below="@+id/micPhone_switch"
                         android:text="麦克风"/>
             </RelativeLayout>
+            <!-->
             <RelativeLayout
                     android:id="@+id/start_switch_box"
                     android:layout_width="wrap_content"
@@ -231,6 +232,7 @@ android:orientation="vertical">
                         android:textColor="@color/start_red"
                         android:text="开始录制"/>
             </RelativeLayout>
+            <-->
             <RelativeLayout
                     android:id="@+id/end_switch_box"
                     android:layout_width="wrap_content"

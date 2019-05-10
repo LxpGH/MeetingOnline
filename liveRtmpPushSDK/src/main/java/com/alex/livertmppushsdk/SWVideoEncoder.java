@@ -1,6 +1,7 @@
 package com.alex.livertmppushsdk;
 
 import android.media.MediaCodecInfo;
+import android.util.Log;
 import com.alex.livertmppushsdk.LibYUVConvert;
 public class SWVideoEncoder {
 	private int _iWidth;
@@ -50,12 +51,14 @@ public class SWVideoEncoder {
     
     public byte[] EncoderH264(byte[] YUVOrigin){
     	if(YUVOrigin == null){
+			//Log.v("第0层","。。。。。。。");
     		return null;
     	}
     	if(YUVOrigin.length != _iWidth*_iHeight*3/2){
+			//Log.v("第一层","。。。。。。。");
     		return null;
     	}
-    	
+    	//Log.v("第一层","。。。。。。。");
     	byte[] h264data = _OpenH264Encoder.EncodeH264frame(_iHandle, /*_YUV420*/YUVOrigin);
     	return h264data;
     }
