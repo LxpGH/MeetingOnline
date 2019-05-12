@@ -4,8 +4,25 @@
                                              android:layout_height="match_parent">
 <TextView
 android:id="@+id/member_tv"
-android:layout_width="wrap_content"
-android:layout_height="wrap_content"
-android:layout_centerInParent="true"
-android:text="成员列表"/>
+android:layout_width="match_parent"
+android:layout_height="50dp"
+android:layout_alignParentTop="true"
+android:layout_alignParentStart="true"
+android:text="成员列表"
+android:textAlignment="center"
+android:gravity="center"
+android:textSize="18sp"
+android:textColor="@color/blue"/>
+    <TextView
+            android:id="@+id/member_below"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@+id/member_tv"
+            android:background="@drawable/line"/>
+    <android.support.v7.widget.RecyclerView
+            android:id="@+id/member_recv"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/member_below"
+    android:layout_marginTop="20dp"/>
 </RelativeLayout>

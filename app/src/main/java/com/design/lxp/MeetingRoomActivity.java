@@ -301,7 +301,7 @@ public class MeetingRoomActivity extends AppCompatActivity {
                         add_view();
                         add_surface();//动态添加
                         add_closeBtn();
-                        //play();
+                        play();
                     }
                     //必须在摄像机初始化前开始推流,因为如果相机先初始化,会先给队列加锁而无法释放出来继续执行
 
