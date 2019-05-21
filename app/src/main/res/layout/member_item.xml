@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/member_item_box"
+              android:layout_width="match_parent"
+              android:layout_height="100dp">
+    <TextView
+            android:id="@+id/position"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_centerVertical="true"
+            android:text="普通成员"
+            android:singleLine="true"
+            android:textSize="10sp"
+            android:textAlignment="center"
+            android:textColor="@color/gray"/>
+    <TextView
+            android:id="@+id/member_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@+id/position"
+            android:layout_marginStart="10dp"
+            android:layout_centerVertical="true"
+            android:text="成员1"
+            android:singleLine="true"
+            android:textSize="20sp"
+            android:textColor="#000"/>
+    <TextView
+            android:id="@+id/sign_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toStartOf="@+id/sign_state"
+            android:layout_marginEnd="20dp"
+            android:layout_centerVertical="true"
+            android:text="2017/5/18 1:13"
+            android:singleLine="true"
+            android:textSize="15sp"
+            android:textColor="@color/gray"/>
+    <TextView
+            android:id="@+id/sign_state"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="20dp"
+            android:layout_centerVertical="true"
+            android:text="未签到"
+            android:singleLine="true"
+            android:textAlignment="center"
+            android:textSize="15sp"
+            android:textColor="@color/sign_red"/>
+
+</RelativeLayout>

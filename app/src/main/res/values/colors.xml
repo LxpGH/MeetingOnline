@@ -9,6 +9,8 @@
     <color name="white">#fff</color>
     <color name="exit_red">#d71e06</color>
     <color name="start_red">#d71e06</color>
+    <color name="sign_red">#d71e06</color>
+    <color name="sign_green">#27e606</color>
     <color name="mic_phone_blue">#1295da</color>
     <color name="camera_blue">#1295da</color>
     <color name="opaque">#00ffffff</color>

@@ -55,6 +55,8 @@ public class RoomSelectActivity extends AppCompatActivity implements
     private ExpandableListView expandableListView;
     private AutoCompleteTextView search_et;
     private List<String> resultArray;
+    private Runnable resultUpdate;
+    private final Handler resultHandler=new Handler();
     private ArrayAdapter<String> resultAdapter;
     private Context context=this;
     public void initView(){
@@ -105,36 +107,87 @@ public class RoomSelectActivity extends AppCompatActivity implements
     }
 
     public void initSpinner(){
+        resultUpdate=new Runnable() {
+            @Override
+            public void run() {
+                resultAdapter=new ArrayAdapter<String>(context,R.layout.item_select,resultArray);
+                search_et.setAdapter(resultAdapter);
+                resultAdapter.notifyDataSetChanged();
+            }
+        };
         search_et=join_pager.findViewById(R.id.search_et);
         search_et.setDropDownHorizontalOffset(0);
         search_et.setDropDownVerticalOffset(0);
-        search_et.setAdapter(getResultAdapter());
+        //search_et.setAdapter(getResultAdapter());
         search_et.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int count) {
 
             }
 
             @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int count) {
+                String str=charSequence.toString();
+                if(str.length()>=2){
+                    /**根据输入后的文本通过网络请求获取会议室数据进行添加备选词**/
+                    Log.v("关键字",""+str);
+                    getSpinner(str);
+                    resultHandler.postDelayed(resultUpdate,500);
+                    /**
+                     resultArray=new ArrayList<>();
+                     resultArray.add("会议4");
+                     resultArray.add("会议5");
+                     resultArray.add("会议6");**/
 
+                }
             }
 
             @Override
             public void afterTextChanged(Editable editable) {
-                String str=editable.toString();
-                if(str.length()>=2){
-                    /**根据输入后的文本通过网络请求获取会议室数据进行添加备选词**/
-                    resultArray.add("会议4");
-                    resultArray.add("会议5");
-                    resultArray.add("会议6");
-                    resultAdapter=new ArrayAdapter<String>(context,R.layout.item_select,resultArray);
-                    search_et.setAdapter(resultAdapter);
-                }
+
             }
         });
     }
 
+    private final  String searchServerUrl="http://192.168.191.1:8080/search";
+public void getSpinner(String keywords){
+        OkHttpClient client =new OkHttpClient();
+        FormBody.Builder postFb=new FormBody.Builder();
+        postFb.add("keywords",keywords);
+       Request request=new Request.Builder()
+               .url(searchServerUrl)
+               .post(postFb.build())
+               .build();
+       Call call=client.newCall(request);
+       call.enqueue(new Callback() {
+           @Override
+           public void onFailure(Call call, IOException e) {
+               Log.v("获取搜索提示结果","失败!");
+           }
+
+           @Override
+           public void onResponse(Call call, Response response) throws IOException {
+               if(response.isSuccessful()){
+                   Log.v("获取搜索提示结果","成功!");
+                   String rspStr=response.body().string();
+                   try {
+                       resultArray=new ArrayList<>();
+                       JSONArray rspJsa=new JSONArray(rspStr);
+                       int length=rspJsa.length();
+                       for(int i=0;i<length;i++){
+                           JSONObject rspJsb=rspJsa.getJSONObject(i);
+                           Log.v("结果项",""+rspJsb.getString("meet_theme"));
+                           resultArray.add(rspJsb.getString("meet_theme"));
+                       }
+                   } catch (JSONException e) {
+                       e.printStackTrace();
+                   }
+               }
+
+
+           }
+       });
+}
     public ArrayAdapter getResultAdapter(){
         resultArray=new ArrayList<>();
         resultArray.add("会议1");

@@ -19,6 +19,8 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -45,8 +47,10 @@ import java.text.Format;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.zip.Inflater;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
 import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
@@ -70,6 +74,8 @@ public class MeetingRoomActivity extends AppCompatActivity {
     private RelativeLayout.LayoutParams params,closeParams;
     public final static  int ID_RTMP_PUSH_START=100;
     private View  view;
+    //刷新按纽
+    private Button refresh_btn;
 
 
     float srcX,srcY,devX,devY;
@@ -274,6 +280,7 @@ public class MeetingRoomActivity extends AppCompatActivity {
         }
     };
     private final Handler urlHandler=new Handler();
+    private View tab_member;
     public void initView(){
         cRelative=findViewById(R.id.cRelative);
         view=View.inflate(MeetingRoomActivity.this,R.layout.preview_window,null);
@@ -282,7 +289,7 @@ public class MeetingRoomActivity extends AppCompatActivity {
         operators_box.openDrawer(Gravity.START);
         /**初始化工具栏**/
         initOperator();
-
+        refreshMemberList();
         /**四个按纽的监听器设置**/
         camera_switch=findViewById(R.id.camera_switch);
         end_switch=findViewById(R.id.end_switch);
@@ -327,6 +334,9 @@ public class MeetingRoomActivity extends AppCompatActivity {
             }
         });
         /**四个按纽的监听器设置**/
+
+        /**刷新按纽点击事件**/
+
     }
     private Queue<byte[]> YUVQueue=new LinkedList<byte[]>();
     private Lock yuvQueueLock=new ReentrantLock();
@@ -1670,6 +1680,9 @@ public class MeetingRoomActivity extends AppCompatActivity {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 tool_vp.setCurrentItem(tab.getPosition());
+                if(tab.getPosition()==0){
+                    refreshMemberList();
+                }
             }
 
             @Override
@@ -1753,7 +1766,7 @@ public class MeetingRoomActivity extends AppCompatActivity {
     private View member_pager,file_pager,details_pager,host_pager,vote_pager;
     public void initToolsPager(){
         tool_vp=findViewById(R.id.operators);
-        List<View> myViewList=new ArrayList<>();
+        final List<View> myViewList=new ArrayList<>();
         member_pager=View.inflate(this,R.layout.tab_member,null);
         file_pager=View.inflate(this,R.layout.tab_file,null);
         details_pager=View.inflate(this,R.layout.tab_details,null);
@@ -1772,6 +1785,8 @@ public class MeetingRoomActivity extends AppCompatActivity {
             @Override
             public void onPageSelected(int position) {
                 tools_bar.getTabAt(position).select();
+                //refreshMemberList();
+
             }
             @Override
             public void onPageScrollStateChanged(int i) {
@@ -1780,8 +1795,99 @@ public class MeetingRoomActivity extends AppCompatActivity {
         };
         ToolPagerAdapter toolPagerAdapter=new ToolPagerAdapter(this,myViewList);
         tool_vp.setAdapter(toolPagerAdapter);
+        toolPagerAdapter.setOnItemClickListener(new ToolPagerAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick() {
+                Log.v("刷新成功","继续");
+                refreshMemberList();
+            }
+        });
         tool_vp.setCurrentItem(0);
         tool_vp.setOnPageChangeListener(toolPagerListener);
+    }
+
+    private RecyclerView member_recv;
+    private List<Member> member_list;
+    private Runnable membersUpdate=new Runnable() {
+        @Override
+        public void run() {
+            //需要通过member_pager获取相应组件，否则会报空指针
+            member_recv=member_pager.findViewById(R.id.member_recv);
+            RecyclerView.LayoutManager layoutManager=new LinearLayoutManager(member_recv.getContext());
+            member_recv.setLayoutManager(layoutManager);
+            MemberListAdapter memberListAdapter=new MemberListAdapter(member_list);
+            member_recv.setAdapter(memberListAdapter);
+            if(isSuccess){
+                Toast.makeText(MeetingRoomActivity.this,"获取成员情况表成功!",Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(MeetingRoomActivity.this,"获取成员情况表失败!请刷新重试",Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
+    private final Handler membersHadler=new Handler();
+    private boolean isSuccess;
+    public void refreshMemberList(){
+        member_list=new ArrayList<>();
+        isSuccess=false;
+        //每次都清空member_list
+        getMemberList("13055271718","000001");
+        membersHadler.postDelayed(membersUpdate,1500);
+    }
+
+    final String memberServerUrl="http://192.168.191.1:8080/getMembers";
+    public void getMemberList(String user_id,String meet_id){
+        OkHttpClient client=new OkHttpClient();
+        MediaType JSON=MediaType.parse("application/json;charset=utf-8");
+        JSONObject postJsb=new JSONObject();
+        try {
+            postJsb.put("meet_id",meet_id);
+            //postJsb.put("meet_user",user_id);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RequestBody requestBody=RequestBody.create(JSON,postJsb.toString());
+        Request request=new Request.Builder()
+                .url(memberServerUrl)
+                .post(requestBody)
+                .build();
+        Call call=client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.v("获取成员列表结果","失败!");
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if(response.isSuccessful()){
+                    isSuccess=true;
+                    String rspStr=response.body().string();
+                    try {
+                        JSONArray rspJsa=new JSONArray(rspStr);
+                        int length=rspJsa.length();
+                        for(int i=0;i<length;i++){
+                            JSONObject rspJsb=rspJsa.getJSONObject(i);
+                            Member member=new Member();
+                            member.setPositionStr(rspJsb.getString("member_position"));
+                            member.setMemberNameStr(rspJsb.getString("member_name"));
+                            member.setSignTimeStr(rspJsb.getString("sign_time"));
+                            int sign_state=rspJsb.getInt("sign_state");
+                            switch (sign_state) {
+                                case 0:
+                                    member.setSignStateStr("未签到");
+                                    break;
+                                case 1:
+                                    member.setSignStateStr("已签到");
+                                    break;
+                            }
+                            member_list.add(member);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -1792,6 +1898,7 @@ public class MeetingRoomActivity extends AppCompatActivity {
         initAll();
 
     }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -1841,9 +1948,18 @@ public class MeetingRoomActivity extends AppCompatActivity {
 class ToolPagerAdapter extends PagerAdapter{
     private Context context;
     private List<View> mViewList;
+    private Button refresh;
+    private OnItemClickListener onItemClickListener;
     public ToolPagerAdapter(Context context,List<View> viewList){
         this.context=context;
         this.mViewList=viewList;
+    }
+
+    public interface OnItemClickListener{
+         void onItemClick();
+    }
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener){
+        this.onItemClickListener=onItemClickListener;
     }
     @Override
     public int getCount() {
@@ -1860,9 +1976,111 @@ class ToolPagerAdapter extends PagerAdapter{
         container.removeView(mViewList.get(position));
     }
     @Override
-    public Object instantiateItem(ViewGroup container, int position){
+    public Object instantiateItem(final ViewGroup container, int position){
+        View view=mViewList.get(position);
+
+        if(position==0){
+            refresh=view.findViewById(R.id.refresh_btn);
+            refresh.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                onItemClickListener.onItemClick();
+                }
+            });
+        }
         container.addView(mViewList.get(position));
         return mViewList.get(position);
+    }
+}
+
+class Member {
+private String positionStr;
+private String memberNameStr;
+private String signTimeStr;
+private String signStateStr;
+
+    public void setPositionStr(String positionStr) {
+        this.positionStr = positionStr;
+    }
+
+    public String getPositionStr() {
+        return positionStr;
+    }
+
+    public void setMemberNameStr(String memberNameStr) {
+        this.memberNameStr = memberNameStr;
+    }
+
+    public String getMemberNameStr() {
+        return memberNameStr;
+    }
+
+    public void setSignTimeStr(String signTimeStr) {
+        this.signTimeStr = signTimeStr;
+    }
+
+    public String getSignStateStr() {
+        return signStateStr;
+    }
+
+    public void setSignStateStr(String signStateStr) {
+        this.signStateStr = signStateStr;
+    }
+
+    public String getSignTimeStr() {
+        return signTimeStr;
+    }
+}
+
+class MemberListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private List<Member> memberList;
+
+    public MemberListAdapter(List<Member> memberList){
+        this.memberList=memberList;
+    }
+    private static class MemberViewHolder extends RecyclerView.ViewHolder{
+        private RelativeLayout member_item_box;
+        private TextView position;
+        private TextView member_name;
+        private TextView sign_time;
+        private TextView sign_state;
+
+        public MemberViewHolder(View itemView) {
+            super(itemView);
+            member_item_box=itemView.findViewById(R.id.member_item_box);
+            position=itemView.findViewById(R.id.position);
+            member_name=itemView.findViewById(R.id.member_name);
+            sign_time=itemView.findViewById(R.id.sign_time);
+            sign_state=itemView.findViewById(R.id.sign_state);
+        }
+    }
+
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int position) {
+        View view=LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.member_item,null);
+        return new MemberViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+        Member member=memberList.get(position);
+        MemberViewHolder memberViewHolder= (MemberViewHolder) viewHolder;
+        RelativeLayout.LayoutParams layoutParams=new RelativeLayout.LayoutParams(MATCH_PARENT,180);
+        memberViewHolder.member_item_box.setLayoutParams(layoutParams);
+        memberViewHolder.member_item_box.setBackgroundColor(Color.argb(54,161,157,158));
+        memberViewHolder.position.setText(member.getPositionStr());
+        memberViewHolder.member_name.setText(member.getMemberNameStr());
+        memberViewHolder.sign_time.setText(member.getSignTimeStr());
+        if(member.getSignStateStr().equals("已签到")){
+            memberViewHolder.sign_state.setTextColor(Color.argb(130,0,255,0));
+        }
+        memberViewHolder.sign_state.setText(member.getSignStateStr());
+        /**此处设置组件监听事件**/
+    }
+
+    @Override
+    public int getItemCount() {
+        return memberList.size();
     }
 }
 

@@ -56,6 +56,9 @@
         </activity>
         <activity android:name=".WebSocketTestActivity">
         </activity>
+        <activity android:name=".RegisterActivity"
+                  android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+        </activity>
     </application>
 
 </manifest>

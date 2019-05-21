@@ -3,6 +3,10 @@
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
 android:id="@+id/result"
 android:layout_width="match_parent"
-android:layout_height="wrap_content"
-android:textAlignment="center"
+
+android:layout_height="50dp"
+          android:gravity="center_vertical"
+          android:paddingStart="20dp"
+          android:textSize="18sp"
+          android:background="@drawable/spinner_item_bg"
 android:textColor="@color/gray"/>

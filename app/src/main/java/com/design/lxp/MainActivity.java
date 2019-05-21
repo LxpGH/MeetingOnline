@@ -3,6 +3,7 @@ package com.design.lxp;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
@@ -21,6 +22,7 @@ import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 private Button login;
+private TextView reg_text;
 private EditText user;
 private EditText pwd;
 private RadioGroup input_mid;
@@ -29,6 +31,8 @@ private int checkedRadio;
 public void initView(){
     login=findViewById(R.id.login_btn);
     login.setOnClickListener(this);
+    reg_text=findViewById(R.id.reg_text);
+    reg_text.setOnClickListener(this);
     user=findViewById(R.id.user_et);
     pwd=findViewById(R.id.pwd_et);
     input_mid=findViewById(R.id.input_mid);
@@ -229,6 +233,11 @@ public boolean formatVerification(String userStr,String pwdStr){
             handler.postDelayed(update,1000);
             //Intent login_intent=new Intent(this,RoomSelectActivity.class);
             //startActivity(login_intent);
+        }else if(v.getId()==reg_text.getId()){
+            reg_text.setTextColor(Color.argb(100,161,157,158));
+            Intent intent=new Intent(MainActivity.this,RegisterActivity.class);
+            startActivity(intent);
+            reg_text.setTextColor(Color.argb(255,76,134,234));
         }
     }
 }
