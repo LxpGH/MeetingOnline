@@ -4,7 +4,12 @@ package com.design.lxp;
 import android.content.Context;
 import android.content.Intent;
 import android.database.DataSetObserver;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
@@ -25,16 +30,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import com.design.lxp.MyUtils.MUtils;
 import okhttp3.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.zip.Inflater;
 
 public class RoomSelectActivity extends AppCompatActivity implements
@@ -61,6 +66,7 @@ public class RoomSelectActivity extends AppCompatActivity implements
     private Context context=this;
     public void initView(){
         initTitleView();
+        initJoinPager();
         initLeftMenu();
         initRightMenu();
         openMenu=findViewById(R.id.menuOpen_btn);
@@ -116,6 +122,7 @@ public class RoomSelectActivity extends AppCompatActivity implements
             }
         };
         search_et=join_pager.findViewById(R.id.search_et);
+        //search_et.clearFocus();
         search_et.setDropDownHorizontalOffset(0);
         search_et.setDropDownVerticalOffset(0);
         //search_et.setAdapter(getResultAdapter());
@@ -234,6 +241,7 @@ public void getSpinner(String keywords){
                     switch (meetItem.getMeet_type()) {
                         case 1:
                             Meet_ meet1 = new Meet_();
+                            meet1.setMeet_id(meetItem.getMeet_id());
                             meet1.setMeet_theme(meetItem.getMeet_theme());
                             meet1.setMeet_size(meetItem.getMeet_size());
                             meet1.setMeet_limit(meetItem.getMeet_limit());
@@ -241,6 +249,7 @@ public void getSpinner(String keywords){
                             break;
                         case 2:
                             Meet_ meet2 = new Meet_();
+                            meet2.setMeet_id(meetItem.getMeet_id());
                             meet2.setMeet_theme(meetItem.getMeet_theme());
                             meet2.setMeet_size(meetItem.getMeet_size());
                             meet2.setMeet_limit(meetItem.getMeet_limit());
@@ -248,6 +257,7 @@ public void getSpinner(String keywords){
                             break;
                         case 3:
                             Meet_ meet3 = new Meet_();
+                            meet3.setMeet_id(meetItem.getMeet_id());
                             meet3.setMeet_theme(meetItem.getMeet_theme());
                             meet3.setMeet_size(meetItem.getMeet_size());
                             meet3.setMeet_limit(meetItem.getMeet_limit());
@@ -255,6 +265,7 @@ public void getSpinner(String keywords){
                             break;
                         case 4:
                             Meet_ meet4 = new Meet_();
+                            meet4.setMeet_id(meetItem.getMeet_id());
                             meet4.setMeet_theme(meetItem.getMeet_theme());
                             meet4.setMeet_size(meetItem.getMeet_size());
                             meet4.setMeet_limit(meetItem.getMeet_limit());
@@ -271,16 +282,19 @@ public void getSpinner(String keywords){
                     if(n%2==0&&n<m1_length-1){
                         Log.v("我添加了","数据");
                         mt1=new Meet();
+                        mt1.setLeftId(m1List.get(n).getMeet_id());
                         mt1.setLeftTitle(m1List.get(n).getMeet_theme());
                         mt1.setLeftSize(m1List.get(n).getMeet_size());
                         mt1.setLeftLimit(m1List.get(n).getMeet_limit());
                     }else if(n%2==0&&n==m1_length-1){
                         mt1=new Meet();
+                        mt1.setLeftId(m1List.get(n).getMeet_id());
                         mt1.setLeftSize(m1List.get(n).getMeet_size());
                         mt1.setLeftLimit(m1List.get(n).getMeet_limit());
                         mt1.setLeftTitle(m1List.get(n).getMeet_theme());
                         m1.add(mt1);
                     }else if(n%2!=0){
+                        mt1.setRightId(m1List.get(n).getMeet_id());
                         mt1.setRightTitle(m1List.get(n).getMeet_theme());
                         mt1.setRightSize(m1List.get(n).getMeet_size());
                         mt1.setRightLimit(m1List.get(n).getMeet_limit());
@@ -296,16 +310,19 @@ public void getSpinner(String keywords){
                 for(int n=0;n<m2_length;n++){
                     if(n%2==0&&n<m2_length-1){
                         mt2=new Meet();
+                        mt2.setLeftId(m2List.get(n).getMeet_id());
                         mt2.setLeftTitle(m2List.get(n).getMeet_theme());
                         mt2.setLeftSize(m2List.get(n).getMeet_size());
                         mt2.setLeftLimit(m2List.get(n).getMeet_limit());
                     }else if(n%2==0&&n>=m2_length-1){
                         mt2=new Meet();
+                        mt2.setLeftId(m2List.get(n).getMeet_id());
                         mt2.setLeftTitle(m2List.get(n).getMeet_theme());
                         mt2.setLeftSize(m2List.get(n).getMeet_size());
                         mt2.setLeftLimit(m2List.get(n).getMeet_limit());
                         m2.add(mt2);
                     }else if(n%2!=0){
+                        mt2.setRightId(m2List.get(n).getMeet_id());
                         mt2.setRightSize(m2List.get(n).getMeet_size());
                         mt2.setRightTitle(m2List.get(n).getMeet_theme());
                         mt2.setRightLimit(m2List.get(n).getMeet_limit());
@@ -321,16 +338,19 @@ public void getSpinner(String keywords){
                 for(int n=0;n<m3_length;n++){
                     if(n%2==0&&n<m3_length-1){
                         mt3=new Meet();
+                        mt3.setLeftId(m3List.get(n).getMeet_id());
                         mt3.setLeftSize(m3List.get(n).getMeet_size());
                         mt3.setLeftTitle(m3List.get(n).getMeet_theme());
                         mt3.setLeftLimit(m3List.get(n).getMeet_limit());
                     }else if(n%2==0&&n>=m3_length-1){
                         mt3=new Meet();
+                        mt3.setLeftId(m3List.get(n).getMeet_id());
                         mt3.setLeftTitle(m3List.get(n).getMeet_theme());
                         mt3.setLeftSize(m3List.get(n).getMeet_size());
                         mt3.setLeftLimit(m3List.get(n).getMeet_limit());
                         m3.add(mt3);
                     }else if(n%2!=0){
+                        mt3.setRightId(m3List.get(n).getMeet_id());
                         mt3.setRightTitle(m3List.get(n).getMeet_theme());
                         mt3.setRightLimit(m3List.get(n).getMeet_limit());
                         mt3.setRightSize(m3List.get(n).getMeet_size());
@@ -348,17 +368,20 @@ public void getSpinner(String keywords){
                     Log.v("n   "," "+" "+(n%2==0&&n>=l4));
                     if(n%2==0&&n<l4){
                         mt4=new Meet();
+                        mt4.setLeftId(m4List.get(n).getMeet_id());
                         mt4.setLeftSize(m4List.get(n).getMeet_size());
                         mt4.setLeftTitle(m4List.get(n).getMeet_theme());
                         mt4.setLeftLimit(m4List.get(n).getMeet_limit());
                     }else if(n%2==0&&n>=l4){
                         Log.v("我有执行到这","+++++++");
                         mt4=new Meet();
+                        mt4.setLeftId(m4List.get(n).getMeet_id());
                         mt4.setLeftTitle(m4List.get(n).getMeet_theme());
                         mt4.setLeftSize(m4List.get(n).getMeet_size());
                         mt4.setLeftLimit(m4List.get(n).getMeet_limit());
                         m4.add(mt4);
                     }else if(n%2!=0){
+                        mt4.setRightId(m4List.get(n).getMeet_id());
                         mt4.setRightSize(m4List.get(n).getMeet_size());
                         Log.v("会议规模"," "+m4List.get(n).getMeet_size());
                         mt4.setRightLimit(m4List.get(n).getMeet_limit());
@@ -400,6 +423,262 @@ public void getSpinner(String keywords){
         vp_content.setCurrentItem(0);
         vp_content.addOnPageChangeListener(vp_listener);
     }
+
+    private ImageView build_head;
+    private EditText build_name;
+    private EditText build_pwd;
+    private EditText build_type_et;
+    private Spinner build_type;
+    private LinearLayout room_type_box;
+    private EditText build_size;
+    private Button build_btn;
+    private final int IMAGE_REQUEST_CODE=0;
+    private Uri build_head_uri;
+    private String head_path=null;
+    private Bitmap head_bitmap=null;
+    public void initJoinPager(){
+        build_head=build_pager.findViewById(R.id.add_btn);
+        build_name=build_pager.findViewById(R.id.roomName_et);
+        build_pwd=build_pager.findViewById(R.id.roomPwd_et);
+        build_type_et=build_pager.findViewById(R.id.roomType_et);
+        build_type_et.setEnabled(false);
+        build_type_et.setTextColor(Color.argb(135,0,0,0));
+        build_type=build_pager.findViewById(R.id.roomType_sp);
+        room_type_box=build_pager.findViewById(R.id.roomType_box);
+        build_size=build_pager.findViewById(R.id.roomSize_et);
+        build_btn=build_pager.findViewById(R.id.build_btn);
+
+        roomName_info=build_pager.findViewById(R.id.roomName_info);
+        roomPwd_info=build_pager.findViewById(R.id.roomPwd_info);
+        roomSize_info=build_pager.findViewById(R.id.roomSize_info);
+        initBuildType();
+        build_head.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(Intent.ACTION_PICK,
+                        android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(intent, IMAGE_REQUEST_CODE);//当新的Activity关闭时能获取到其返回值
+            }
+        });
+        build_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                build_btn.setText("创建中...");
+                roomName_info.setText("");
+                roomPwd_info.setText("");
+                roomSize_info.setText("");
+                /**会议室创建**/
+                addRoom();
+                /**反馈创建结果**/
+                addUpdate=new Runnable() {
+                    @Override
+                    public void run() {
+                        if(build_result){//&&addUrl_result
+                        build_btn.setText("创建会议室");
+                        Toast.makeText(context, "会议室创建成功!", Toast.LENGTH_SHORT).show();
+                        }else{
+                            build_btn.setText("创建会议室");
+                            roomName_info.setText("会议室名已被使用!");
+                        }
+                    }
+                };
+                addHandler.postDelayed(addUpdate,1000);
+            }
+        });
+    }
+    public void initBuildType(){
+        final String[] typeArray={"家庭会议","企业会议","主题会议","其他会议"};
+        int[] iconArray={R.drawable.ic_family,
+                        R.drawable.ic_enterprise,
+                        R.drawable.ic_theme,
+                        R.drawable.ic_other};
+        List<Map<String,Object>> list=new ArrayList<Map<String,Object>>();
+        for(int i=0;i<iconArray.length;i++){
+            Map<String,Object> item=new HashMap<>();
+            item.put("icon",iconArray[i]);
+            item.put("name",typeArray[i]);
+            list.add(item);
+        }
+        SimpleAdapter simpleAdapter=new SimpleAdapter(this,list,R.layout.item_select,
+                new String[]{"icon","name"},new int[]{R.id.type_item_icon,R.id.type_item_tv});
+        simpleAdapter.setDropDownViewResource(R.layout.build_type_item);
+        build_type.setPrompt("请选择创建的会议类别");
+        build_type.setDropDownVerticalOffset(120);
+        build_type.setDropDownWidth(900);
+        build_type.setDropDownHorizontalOffset(600);
+        build_type.setAdapter(simpleAdapter);
+        build_type.setSelection(0);
+        build_type.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                build_type_et.setText(typeArray[i]);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+    }
+    private TextView roomName_info,roomPwd_info,roomSize_info;
+    private Runnable addUpdate;
+    private final  Handler addHandler=new Handler();
+    public static final String FORMAT_PASSWORD = "^[a-zA-Z0-9]{6,12}$";//(至少6位，不包含特殊字符)
+    public void addRoom(){
+    final String buildNameStr=build_name.getText().toString();
+    final String  buildPwdStr=build_pwd.getText().toString();
+    final String buildTypeStr=build_type_et.getText().toString();
+    final String  buildSizeStr=build_size.getText().toString();
+    final String hoster=getIntent().getStringExtra("login_user");
+    /**需要提交头像是否选择判断**/
+    if(!isIllegal(buildNameStr,buildPwdStr,buildSizeStr)){
+        addUpdate=null;
+        return;
+    }
+    if(!isConnected()){
+        addUpdate=null;
+        return ;
+    }
+    int buildType=-1;
+    if(buildTypeStr.equals("家庭会议")){
+        buildType=1;
+    }else if(buildTypeStr.equals("企业会议")){
+        buildType=2;
+    }else if(buildTypeStr.equals("主题会议")){
+        buildType=3;
+    }else if(buildTypeStr.equals("其他会议")){
+        buildType=4;
+    }
+    int buildSizeInt=Integer.valueOf(buildSizeStr);
+
+        buildPost(buildNameStr,buildPwdStr,buildType,buildSizeInt,hoster);
+    }
+
+    public boolean isIllegal(String buildName,String buildPwd,String buildSize){
+        boolean islegal=true;
+        if(buildSize.equals("")){
+            islegal=false;
+            build_btn.setText("创建会议室");
+            roomSize_info.setText("须填写会议室规模!");
+            build_size.requestFocus();
+        }
+        if(buildPwd.equals("")){
+            islegal=false;
+            build_btn.setText("创建会议室");
+            roomPwd_info.setText("须填写会议室密码!");
+            build_pwd.requestFocus();
+        }
+        if(buildName.equals("")){
+            islegal=false;
+            build_btn.setText("创建会议室");
+            roomPwd_info.setText("须填写会议室名称!");
+            build_name.requestFocus();
+        }
+        if(!islegal){
+            return islegal;
+        }
+        boolean isValid=true;
+        /**进进行密码格式检查即可**/
+        boolean isPwd=Pattern.matches(FORMAT_PASSWORD,buildPwd);
+        if(!isPwd){
+            isValid=false;
+            build_btn.setText("创建会议室");
+            roomPwd_info.setText("密码格式错误!");
+        }
+        return isValid;
+    }
+
+    /**网络连接验证**/
+    public boolean isConnected(){
+        ConnectivityManager connectivityManager=(ConnectivityManager)this.getApplicationContext()
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo=connectivityManager.getActiveNetworkInfo();
+        if(networkInfo==null){
+            build_btn.setText("创建会议室");
+            Toast.makeText(this,"网络连接错误",Toast.LENGTH_SHORT).show();
+            return false; }
+        NetworkInfo.State networkState=networkInfo.getState();
+        if(networkState==NetworkInfo.State.DISCONNECTED||networkState==NetworkInfo.State.UNKNOWN){
+            build_btn.setText("创建会议室");
+            Toast.makeText(this,"网络连接错误",Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
+    private final String buildServerUrl="http://192.168.191.1:8080/build_room";
+    private Boolean build_result=false;
+    public void buildPost(String buildName,String buildPwd,int buildType,int buildSizeInt,String host_user){
+        OkHttpClient client =new OkHttpClient();
+        MediaType FILE=MediaType.parse("application/octet-stream; charset=GBK");//"application/octet-stream"以流的形式传输任意格式文件
+       /**输出bitmap文件到文件输出流**/
+        FileOutputStream fileOutputStream;
+        try {
+            fileOutputStream=openFileOutput("build_head.jpg",MODE_PRIVATE);
+            head_bitmap.compress(Bitmap.CompressFormat.JPEG,100,fileOutputStream);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        File head_file= new File(getFilesDir(),"build_head.jpg");
+        RequestBody fileBody=RequestBody.create(FILE,head_file);
+        RequestBody requestBody=new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("room_name",buildName)
+                .addFormDataPart("room_password",buildPwd)
+                .addFormDataPart("room_type",String.valueOf(buildType))
+                .addFormDataPart("room_size",String.valueOf(buildSizeInt))
+                .addFormDataPart("take_user",host_user)
+                .addFormDataPart("build_head","build_head.jpg",fileBody)
+                .build();
+        Request request=new Request.Builder()
+                .url(buildServerUrl)
+                .post(requestBody)
+                .build();
+        Call call=client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.v("创建房间请求结果","失败!");
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if(response.isSuccessful()){
+                    String rspStr=response.body().string();
+                    build_result=Boolean.valueOf(rspStr);
+                }
+            }
+        });
+
+    }
+
+    private String addHosterServerUrl="http://192.168.191.1:8080/hoster_add";
+    private Boolean addHoster_result=false;
+    public void addHoster(){
+    }
+    private String addUrlServerUrl="http://192.168.191.1:8080/url_add";
+    private Boolean addUrl_result=false;
+    public void addUrl(){
+        final String buildNameStr=build_name.getText().toString();
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(data!=null){
+            if(requestCode==IMAGE_REQUEST_CODE){
+                build_head_uri=data.getData();
+                Log.v("头像uri",""+build_head_uri);
+                MUtils mUtils=new MUtils();
+                head_path=mUtils.uri2path(this,build_head_uri);
+                Log.v("头像path",""+head_path);
+                Bitmap bitMap=BitmapFactory.decodeFile(head_path);
+                head_bitmap=mUtils.getOvalBitmap(bitMap,build_head.getWidth(),build_head.getHeight());
+                build_head.setPadding(0,0,0,0);
+                build_head.setImageBitmap(head_bitmap);
+            }
+        }
+    }
+
     final String meetServerUrl="http://192.168.191.1:8080/getMeets";
     private Runnable listUpdate;
     private final Handler listHandler=new Handler();
@@ -434,6 +713,7 @@ public void getSpinner(String keywords){
                         for(int i=0;i<roomListLength;i++){
                             meetjsb = jsonArray.getJSONObject(i);
                             Meet_ meet_=new Meet_();
+                            meet_.setMeet_id(meetjsb.getString("meet_id"));
                             meet_.setMeet_theme(meetjsb.getString("meet_theme"));
                             Log.v("meetjsb ",i+" "+meetjsb.getString("meet_theme"));
                             meet_.setMeet_size(meetjsb.getInt("total_size"));
@@ -721,10 +1001,19 @@ class RoomPagerAdapter extends PagerAdapter{
 
 /***用于整合服务器获取的会议数据进行过渡***/
 class Meet_{
+    private String meet_id;
     private String meet_theme;
     private int meet_size;
     private String meet_limit;
     private int meet_type;
+
+    public void setMeet_id(String  meet_id) {
+        this.meet_id = meet_id;
+    }
+
+    public String  getMeet_id() {
+        return meet_id;
+    }
 
     public void setMeet_theme(String meet_theme) {
         this.meet_theme = meet_theme;
@@ -759,9 +1048,18 @@ class Meet_{
     }
 }
 class Meet{
+    private String leftId,rightId;
     private String rightTitle,leftTitle;
     private int rightSize,leftSize;
     private String rightLimit,LeftLimit;
+
+    public void setLeftId(String leftId) {
+        this.leftId = leftId;
+    }
+
+    public void setRightId(String rightId) {
+        this.rightId = rightId;
+    }
 
     public void setRightTitle(String rightTitle) {
         this.rightTitle = rightTitle;
@@ -793,6 +1091,14 @@ class Meet{
 
     public String getLeftTitle() {
         return leftTitle;
+    }
+
+    public String getLeftId() {
+        return leftId;
+    }
+
+    public String getRightId() {
+        return rightId;
     }
 
     public int getLeftSize() {
@@ -874,9 +1180,9 @@ class MeetAdapter extends BaseExpandableListAdapter {
     }
 
     @Override
-    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View
-            convertView, ViewGroup viewGroup) {
-        ChildHolder childHolder;
+    public View getChildView(final int groupPosition, final int childPosition, boolean isLastChild, View
+            convertView, final ViewGroup viewGroup) {
+        final ChildHolder childHolder;
         if(convertView==null){
             childHolder=new ChildHolder();
             convertView=LayoutInflater.from(viewGroup.getContext()).inflate
@@ -908,7 +1214,15 @@ class MeetAdapter extends BaseExpandableListAdapter {
 
             childHolder.left_limit.setText(meets.get(groupPosition).get(childPosition).getLeftLimit
                     ());
-
+            childHolder.left_box.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent=new Intent(context,MeetShowActivity.class);
+                    Log.v("select_meetId",meets.get(groupPosition).get(childPosition).getLeftId());
+                    intent.putExtra("select_meetId",meets.get(groupPosition).get(childPosition).getLeftId());
+                    context.startActivity(intent);
+                }
+            });
             childHolder.right_box.setVisibility(View.INVISIBLE);
            return convertView;
         }
@@ -925,6 +1239,24 @@ class MeetAdapter extends BaseExpandableListAdapter {
                     ());
             childHolder.right_limit.setText(meets.get(groupPosition).get
                     (childPosition).getRightLimit());
+            childHolder.left_box.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent=new Intent(viewGroup.getContext(),MeetShowActivity.class);
+                    Log.v("select_meetId",meets.get(groupPosition).get(childPosition).getLeftId());
+                    intent.putExtra("select_meetId",meets.get(groupPosition).get(childPosition).getLeftId());
+                    viewGroup.getContext().startActivity(intent);
+                }
+            });
+        childHolder.right_box.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent=new Intent(context,MeetShowActivity.class);
+                Log.v("select_meetId",meets.get(groupPosition).get(childPosition).getRightId());
+                intent.putExtra("select_meetId",meets.get(groupPosition).get(childPosition).getRightId());
+                context.startActivity(intent);
+            }
+        });
 
         return convertView;
     }

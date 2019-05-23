@@ -21,7 +21,7 @@ import java.util.logging.SocketHandler;
 public class WebSocketTestActivity extends AppCompatActivity {
     public void initView(){
         setListener();
-        mHandler.postDelayed(heartBeatRunnable,HEART_BEAT_RATE);//发送心跳包，由于运营商网关问题，需要发送心跳包保持连接
+        mHandler.post(heartBeatRunnable);//发送心跳包，由于运营商网关问题，需要发送心跳包保持连接
     }
 
     private long sendTime=0L;
@@ -39,7 +39,7 @@ public class WebSocketTestActivity extends AppCompatActivity {
             mSocket.send(message);
             sendTime=System.currentTimeMillis();
         }
-        mHandler.post(this); //每隔一定的时间，对长连接进行一次心跳检测
+        mHandler.postDelayed(this,HEART_BEAT_RATE); //每隔一定的时间，对长连接进行一次心跳检测
     }
 };
 private WebSocket mSocket;

@@ -20,6 +20,7 @@
                 android:layout_toEndOf="@+id/search_icon"
                 android:background="@null"
                 android:hint="请输入关键字"
+                android:windowSoftInputMode="adjustUnspecified|stateHidden"
                 android:completionThreshold="2"
                 android:textCursorDrawable="@drawable/ic_line"/>
 
