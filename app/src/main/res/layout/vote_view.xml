@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="300dp"
+              android:layout_height="150dp"
+              android:id="@+id/vote_view_box" 
+              android:layout_centerInParent="true" 
+              android:orientation="vertical">
+<TextView
+android:id="@+id/vote_view_txt"
+android:layout_width="match_parent"
+android:layout_height="0dp"
+android:layout_weight="1"
+android:text="主持人发起的投票"
+android:textColor="@color/white"
+android:gravity="center_vertical"
+android:background="@color/blue"/>
+    <TextView
+            android:id="@+id/vote_content"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="3"
+            android:text="投票内容"
+            android:textColor="#000"
+            android:gravity="center"
+            android:background="@color/white"/>
+<LinearLayout
+android:id="@+id/vote_view_btns"
+android:layout_width="match_parent"
+android:layout_height="0dp"
+android:layout_weight="1"
+android:orientation="horizontal">
+    <Button
+    android:id="@+id/vote_support"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:text="支持"
+    android:textColor="@color/white"
+    android:background="@drawable/vote_btn_selector"/>
+    <Button
+            android:id="@+id/vote_against"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="反对"
+            android:textColor="@color/white"
+            android:background="@drawable/vote_btn_selector"/>
+</LinearLayout>
+</LinearLayout>

@@ -1,11 +1,16 @@
 package com.design.lxp;
 
+import android.content.Context;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.JsonReader;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.TextView;
 import okhttp3.*;
 import okio.ByteString;
 import org.json.JSONException;
@@ -18,12 +23,33 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.SocketHandler;
 
-public class WebSocketTestActivity extends AppCompatActivity {
-    public void initView(){
-        setListener();
-        mHandler.post(heartBeatRunnable);//发送心跳包，由于运营商网关问题，需要发送心跳包保持连接
-    }
+import static android.view.WindowManager.LayoutParams.*;
 
+
+public class WebSocketTestActivity extends AppCompatActivity {
+private WindowManager windowManager;
+    public void initView(){
+        //setListener();
+        //mHandler.postDelayed(heartBeatRunnable,HEART_BEAT_RATE);//发送心跳包，由于运营商网关问题，需要发送心跳包保持连接
+        addViewTest();
+    }
+private Button vote_content;
+    public void addViewTest(){
+        windowManager= (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
+        vote_content=new Button(this);
+        vote_content.setText("测试!");
+        vote_content.setBackgroundResource(R.drawable.host_btn_selected);
+        vote_content.setZ(1);
+        WindowManager.LayoutParams layoutParams=new WindowManager.LayoutParams();
+        //layoutParams.token=WebSocketTestActivity.this.getWindow().getDecorView().getWindowToken();
+        layoutParams.flags = FLAG_NOT_TOUCH_MODAL | FLAG_NOT_FOCUSABLE;
+        layoutParams.width=1000;//大小直接设置可能导致分辨率不适配
+        layoutParams.height=1000;
+        layoutParams.x=300;
+        layoutParams.y=-300;
+        layoutParams.gravity=Gravity.CENTER_HORIZONTAL;
+        windowManager.addView(vote_content,layoutParams);
+    }
     private long sendTime=0L;
     //发送心跳包
     private Handler mHandler=new Handler();
@@ -44,7 +70,7 @@ public class WebSocketTestActivity extends AppCompatActivity {
 };
 private WebSocket mSocket;
 
-private String testServerUrl="ws://192.168.191.1:8080/webSocket/lxp";
+private String testServerUrl="ws://192.168.191.1:8080/roomSocket/lxp";
    private OkHttpClient client;
     public void setListener(){//实际请求
         client=new OkHttpClient.Builder()

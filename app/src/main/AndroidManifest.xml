@@ -54,7 +54,8 @@
                 android:name=".RoomSelectActivity"
                 android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         </activity>
-        <activity android:name=".WebSocketTestActivity">
+        <activity android:name=".WebSocketTestActivity"
+                  android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         </activity>
         <activity
                 android:name=".RegisterActivity"

@@ -32,6 +32,7 @@ import com.alex.livertmppushsdk.SWVideoEncoder;
 
 import com.design.lxp.MyUtils.MUtils;
 import okhttp3.*;
+import okio.ByteString;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,6 +46,7 @@ import tv.danmaku.ijk.media.player.misc.ITrackInfo;
 import java.io.*;
 import java.text.Format;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.Inflater;
@@ -229,7 +231,6 @@ public class MeetingRoomActivity extends AppCompatActivity {
         end_switch.setEnabled(false);
     }
     public void add_view(){
-        windowManager=(WindowManager) this.getApplicationContext().getSystemService(Context.WINDOW_SERVICE  );
         layoutParams=new WindowManager.LayoutParams();
         layoutParams.type=WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
         layoutParams.token=MeetingRoomActivity.this.getWindow().getDecorView().getWindowToken();
@@ -242,7 +243,6 @@ public class MeetingRoomActivity extends AppCompatActivity {
         windowManager.addView(view,layoutParams);
     }
     public void add_surface(){
-        wm=(WindowManager) view.getContext().getSystemService(WINDOW_SERVICE) ;
         lp=new WindowManager.LayoutParams();
         lp.width=WIDTH_DEF;
         lp.height=HEIGHT_DEF;
@@ -284,12 +284,16 @@ public class MeetingRoomActivity extends AppCompatActivity {
     public void initView(){
         cRelative=findViewById(R.id.cRelative);
         view=View.inflate(MeetingRoomActivity.this,R.layout.preview_window,null);
+        windowManager=(WindowManager) this.getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+        wm=(WindowManager) view.getContext().getSystemService(WINDOW_SERVICE) ;
         operators_box=findViewById(R.id.operators_box);
         operators_box.setScrimColor(Color.TRANSPARENT);
         operators_box.openDrawer(Gravity.START);
         /**初始化工具栏**/
         initOperator();
         refreshMemberList();
+        initHost();
+        initMember();
         /**四个按纽的监听器设置**/
         camera_switch=findViewById(R.id.camera_switch);
         end_switch=findViewById(R.id.end_switch);
@@ -1889,6 +1893,368 @@ public class MeetingRoomActivity extends AppCompatActivity {
             }
         });
     }
+    private EditText vote_theme;
+    private EditText record_theme;
+    private Button vote_release;
+    private TextView vote_info;
+    private Button record_release;
+    private Button vote_create;
+    private Button record_meet;
+    private Button end_meet;
+    private LinearLayout vote_box,record_box;
+    public void initHost(){
+        vote_theme=host_pager.findViewById(R.id.vote_theme);
+        record_theme=host_pager.findViewById(R.id.record_theme);
+        vote_release=host_pager.findViewById(R.id.vote_release);
+        vote_info=host_pager.findViewById(R.id.vote_info);
+        record_release=host_pager.findViewById(R.id.record_release);
+        vote_create=host_pager.findViewById(R.id.vote_create);
+        record_meet=host_pager.findViewById(R.id.record_meet);
+        end_meet=host_pager.findViewById(R.id.end_meet);
+        vote_box=host_pager.findViewById(R.id.vote_box);
+        record_box=host_pager.findViewById(R.id.record_box);
+
+        vote_create.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                vote_create.setBackgroundResource(R.drawable.host_btn_selected);
+                record_meet.setBackgroundResource(R.drawable.host_btn_bg);
+                end_meet.setBackgroundResource(R.drawable.host_btn_bg);
+                record_box.setVisibility(View.GONE);
+                vote_box.setVisibility(View.VISIBLE);
+            }
+        });
+        vote_release.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                vote_info.setText("");
+                final String voteThemeStr=vote_theme.getText().toString();
+                if(voteThemeStr.length()<3||voteThemeStr.length()>50){
+                    vote_info.setText("投票主题字数3-50字!");
+                }else {
+                    setHosterListener();/***打开ws连接，保持连接监听**/
+                    socketHandler.postDelayed(heartBeatRunnable,HEART_BEAT_RATE);
+                }
+            }
+        });
+        record_meet.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                record_meet.setBackgroundResource(R.drawable.host_btn_selected);
+                vote_create.setBackgroundResource(R.drawable.host_btn_bg);
+                end_meet.setBackgroundResource(R.drawable.host_btn_bg);
+                vote_box.setVisibility(View.GONE);
+                record_box.setVisibility(View.VISIBLE);
+            }
+        });
+        end_meet.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                end_meet.setBackgroundResource(R.drawable.host_btn_selected);
+                record_meet.setBackgroundResource(R.drawable.host_btn_bg);
+                vote_create.setBackgroundResource(R.drawable.host_btn_bg);
+                Intent intent=new Intent(MeetingRoomActivity.this,WebSocketTestActivity.class);
+                startActivity(intent);
+            }
+        });
+    }
+
+    private long sendTime=0L;
+    //发送心跳包
+    private Handler socketHandler=new Handler();
+    //发送心跳包频率:2s
+    private static final long HEART_BEAT_RATE=2*1000;
+
+    //主持人发送心跳包
+    private Runnable heartBeatRunnable=new Runnable() {
+        @Override
+        public void run() {
+            if(System.currentTimeMillis()-sendTime>=HEART_BEAT_RATE){
+               // String message =sendData();
+                hosterSocket.send("");
+                sendTime=System.currentTimeMillis();
+            }
+            socketHandler.postDelayed(this,HEART_BEAT_RATE); //每隔一定的时间，对长连接进行一次心跳检测
+        }
+    };
+    private Button vote_support;
+    private Button vote_against;
+    public void initMember(){
+        voteView=View.inflate(context,R.layout.vote_view,null);
+        vote_view_box=voteView.findViewById(R.id.vote_view_box);
+        vote_content=voteView.findViewById(R.id.vote_content);
+        vote_support=voteView.findViewById(R.id.vote_support);
+        vote_against=voteView.findViewById(R.id.vote_against);
+
+
+        setMemberListener();
+        socketHandler.postDelayed(memberHeartBeat,HEART_BEAT_RATE);
+    }
+    //成员发送心跳包
+    private Runnable memberHeartBeat=new Runnable() {
+        @Override
+        public void run() {
+            if(System.currentTimeMillis()-sendTime>=HEART_BEAT_RATE){
+                // String message =sendData();
+                memberSocket.send("");
+                sendTime=System.currentTimeMillis();
+            }
+            socketHandler.postDelayed(this,HEART_BEAT_RATE); //每隔一定的时间，对长连接进行一次心跳检测
+        }
+    };
+    private WebSocket hosterSocket,memberSocket;
+    private String roomWsServerUrl="ws://192.168.191.1:8080/roomSocket/lxp";
+    private OkHttpClient memberClient,hosterClient;
+    public void setHosterListener(){//实际请求
+        hosterClient=new OkHttpClient.Builder()
+                .readTimeout(3, TimeUnit.SECONDS)
+                .writeTimeout(3,TimeUnit.SECONDS)
+                .connectTimeout(3,TimeUnit.SECONDS)
+                .build();
+        Request request=new Request.Builder().url(roomWsServerUrl).build();
+        HosterWebSocketListener socketListener=new HosterWebSocketListener();
+
+        hosterClient.newWebSocket(request,socketListener);
+        hosterClient.dispatcher().executorService().shutdown();
+    }
+    public void setMemberListener(){//实际请求
+        memberClient=new OkHttpClient.Builder()
+                .readTimeout(3, TimeUnit.SECONDS)
+                .writeTimeout(3,TimeUnit.SECONDS)
+                .connectTimeout(3,TimeUnit.SECONDS)
+                .build();
+        Request request=new Request.Builder().url(roomWsServerUrl).build();
+        MemberWebSocketListener socketListener=new   MemberWebSocketListener();
+
+        memberClient.newWebSocket(request,socketListener);
+        memberClient.dispatcher().executorService().shutdown();
+    }
+    private class HosterWebSocketListener extends WebSocketListener{
+        @Override
+        public void onOpen(WebSocket webSocket, Response response){
+            super.onOpen(webSocket,response);
+            hosterSocket=webSocket;
+            output("主持人连接结果","连接成功!");
+            String sendStr=sendVote();
+            hosterSocket.send(sendStr);
+        }
+        @Override
+        public void onMessage(WebSocket webSocket, ByteString bytes) {
+            super.onMessage(webSocket, bytes);
+            output("WebSocket接收bytes数据",""+bytes.hex());
+        }
+
+        @Override
+        public void onMessage(WebSocket webSocket, String text) {
+            super.onMessage(webSocket, text);
+            //output("WebSocket,服务端发送来的消息",text);
+            //连接断开测试
+            /**
+             if(!TextUtils.isEmpty(text)){
+             if(mSocket!=null){
+             mSocket.close(1000,null);
+             }
+             if(mHandler!=null){
+             mHandler.removeCallbacksAndMessages(null);
+             mHandler=null;
+             }
+             }**/
+        }
+
+        @Override
+        public void onClosed(WebSocket webSocket, int code, String reason) {
+            super.onClosed(webSocket, code, reason);
+            output("WebSocket closed",reason);
+        }
+
+        @Override
+        public void onClosing(WebSocket webSocket, int code, String reason) {
+            super.onClosing(webSocket, code, reason);
+            output("WebSocket closing",reason);
+        }
+
+        @Override
+        public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+            super.onFailure(webSocket, t, response);
+            output("WebSocket failure",t.getMessage());
+        }
+    }
+
+    private class MemberWebSocketListener extends WebSocketListener{
+        @Override
+        public void onOpen(WebSocket webSocket, Response response){
+            super.onOpen(webSocket,response);
+            memberSocket=webSocket;
+            output("成员连接结果","连接成功!");
+            //String sendStr=sendVote();
+            //mSocket.send(sendStr);
+        }
+        @Override
+        public void onMessage(WebSocket webSocket, ByteString bytes) {
+            super.onMessage(webSocket, bytes);
+            output("WebSocket接收bytes数据",""+bytes.hex());
+        }
+
+        @Override
+        public void onMessage(WebSocket webSocket, String text) {
+            super.onMessage(webSocket, text);
+            output("成员客户端,服务端发送来的消息",text);
+            try {
+                JSONObject rspJsb=new JSONObject(text);
+                if( !rspJsb.isNull("vote_content")){//空为true，非空为false
+                    output("成员客户端,","可以");
+                    final String vote_theme=rspJsb.getString("vote_content");
+                    voteAlert(vote_theme);
+                    vote_support.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            wm.removeView(vote_view_box);
+                            final int SUPPORT=1;
+                            addVoteResult(user_id,vote_theme,meet_id,SUPPORT);
+                            addVoteUpdate=new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(MeetingRoomActivity.this, "你选择了支持票!", Toast.LENGTH_SHORT).show();
+                                }
+                            };
+                            addVoteHandler.postDelayed(addVoteUpdate,1000);
+                        }
+                    });
+
+                    vote_against.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+
+                            wm.removeView(vote_view_box);
+                            final int AGAINST=0;
+                            addVoteResult(user_id,vote_theme,meet_id,AGAINST);
+                            addVoteUpdate=new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(MeetingRoomActivity.this, "你选择了反对票!", Toast.LENGTH_SHORT).show();
+                                }
+                            };
+                            addVoteHandler.postDelayed(addVoteUpdate,1000);
+                        }
+                    });
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onClosed(WebSocket webSocket, int code, String reason) {
+            super.onClosed(webSocket, code, reason);
+            output("WebSocket closed",reason);
+        }
+
+        @Override
+        public void onClosing(WebSocket webSocket, int code, String reason) {
+            super.onClosing(webSocket, code, reason);
+            output("WebSocket closing",reason);
+        }
+
+        @Override
+        public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+            super.onFailure(webSocket, t, response);
+            output("WebSocket failure",t.getMessage());
+        }
+    }
+    private boolean isVoteAdd=false;
+    private final String voteServerUrl="http://192.168.191.1:8080/vote";
+    private Runnable addVoteUpdate;
+    private final Handler addVoteHandler=new Handler();
+    public void addVoteResult(String vote_user,String vote_theme,String vote_meet,int vote_status) {
+        OkHttpClient client=new OkHttpClient();
+        MediaType JSON=MediaType.parse("application/json;charset=utf-8");
+        JSONObject postJsb=new JSONObject();
+        try {
+            postJsb.put("vote_user",vote_user);
+            postJsb.put("vote_theme",vote_theme);
+            postJsb.put("vote_meet",vote_meet);
+            postJsb.put("vote_status",vote_status);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RequestBody requestBody=RequestBody.create(JSON,postJsb.toString());
+        final Request request=new Request.Builder()
+                .url(voteServerUrl)
+                .post(requestBody)
+                .build();
+        Call call=client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.v("添加投票请求结果","失败!");
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if(response.isSuccessful()){
+                    String rspStr=response.body().string();
+                    Log.v("添加投票请求结果","成功!");
+                    isVoteAdd =Boolean.valueOf(rspStr);
+                }
+            }
+        });
+    }
+    private void output(final String TAG, final String text){//ui更新线程
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.i(TAG,text);
+            }
+        });
+    }
+    private Runnable voteUpdate;
+    private final Handler voteHandler=new Handler();
+    private View voteView;
+    private LinearLayout vote_view_box;
+    private  TextView vote_content;
+    private final Context context=this;
+    private void voteAlert(final String vote_notice){//ui更新线程
+        voteUpdate=new Runnable() {
+            @Override
+            public void run() {
+                vote_content.setText(vote_notice);
+                WindowManager.LayoutParams voteParams=new WindowManager.LayoutParams();
+                voteParams.width=640;
+                voteParams.height=480;
+                voteParams.x=0;
+                voteParams.y=0;
+
+                voteParams.flags=FLAG_NOT_TOUCH_MODAL|FLAG_WATCH_OUTSIDE_TOUCH;
+                voteParams.gravity=Gravity.CENTER_HORIZONTAL;
+                Log.v("弹窗","vote_notice");
+                wm.addView(vote_view_box,voteParams);
+                /**不能用全局的Context，只能用当前Context，否则会导致token null
+                 只有type=TYPE_SYSTEM_ALERT时才可用全局applicationContext，但已经过时
+                 **/
+            }
+        };
+        voteHandler.postDelayed(voteUpdate,600);
+
+    }
+    private String meet_id=getIntent().getStringExtra("meet_id");
+    private  String user_id=getIntent().getStringExtra("user_id");
+    private String sendVote(){
+        //String meet_id=getIntent().getStringExtra("meet_id");
+        // String user_id=getIntent().getStringExtra("meet_id");
+        String meet_id="000001";
+        String user_id="13055271716";
+        String vote_content=vote_theme.getText().toString();
+        JSONObject testPostJsb=new JSONObject();
+        try {
+            testPostJsb.put("meet_id",meet_id);
+            testPostJsb.put("user_id",user_id);
+            testPostJsb.put("vote_content",vote_content);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+       String postStr=testPostJsb.toString();
+        return postStr;
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -2083,4 +2449,3 @@ class MemberListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return memberList.size();
     }
 }
-
